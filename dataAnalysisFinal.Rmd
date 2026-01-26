@@ -1,0 +1,655 @@
+---
+title: "Data Analysis Final"
+author: "Shubham Agrawal"
+date: "2026-01-26"
+output:
+  BiocStyle::html_document:
+    toc_float: true
+    code_folding: "hide"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, dev = c("png", "pdf"), fig.path = "./figureDataAnalysisFinal/")
+library(tidyverse)
+library(MultiAssayExperiment)
+source(file = "helper.R")
+```
+
+# Load the MultiAssayExperiment objects
+
+Load the MultiAssayExperiment object of the InSolutionDigest experiment:
+
+```{r, message=FALSE}
+maeInSolution <- readRDS("data/maeInSolutionDigest.Rds")
+maeInSolution
+```
+
+Load the MultiAssayExperiment object of the TitrationCurve experiment:
+
+```{r, message=FALSE}
+maeTitrationAll <- readRDS("data/maeTitrationCurve.Rds")
+maeTitrationAll 
+```
+
+Get only the T2 samples
+
+```{r}
+maeTitration <- maeTitrationAll[, maeTitrationAll$tlevel == "T2"]
+maeTitration
+```
+
+# Get the SummarizedExperiment object of phosphoproteome assay
+
+Extract the phosphoproteome experiments from both the objects.
+
+```{r, message=FALSE}
+seInSolution <- maeInSolution[["Phosphoproteome"]]
+colData(seInSolution) <- colData(maeInSolution)
+seInSolution
+```
+```{r, message=FALSE}
+seTitration <- maeTitration[["Phosphoproteome"]]
+colData(seTitration) <- colData(maeTitration)
+seTitration
+```
+# Plot the total phosphosites detected
+
+```{r}
+seInSolutionHGF <- seInSolution[, seInSolution$treatment == "HGF" &
+                                  seInSolution$sampleType == "PP"]
+seTitrationHGF <- seTitration[, seTitration$treatment == "HGF" &
+                                  seTitration$sampleType == "PP"]
+```
+
+This plot shows the total number of phosphosites detected for each sample in the 
+SmartPhos experiment. Here each bar is coloured by the quantity value. We 
+see 50ug, 200ug and 750ug samples have similar number of phosphosites detected. 
+Increasing the sample quantity to 750ug doesn't improve the phophosite detection.
+
+```{r}
+# Extract the assay data from the SummarizedExperiment object
+countMat <- assay(seTitrationHGF)
+
+# Create a table with sample names and their corresponding percentage of
+# non-missing values
+plotTab <- tibble(
+  sample = seTitrationHGF$sample,
+  total = colSums(!is.na(countMat)) 
+)
+
+# Extract metadata from the SummarizedExperiment object
+meta <- as.data.frame(colData(seTitrationHGF))
+# Join the count data with metadata
+plotTab <- left_join(plotTab, meta, by = "sample")
+
+plotTab <- plotTab %>%
+  mutate(quantity = factor(quantity,
+                           levels = c("5ug","15ug","50ug","200ug","750ug"),
+                           ordered = TRUE)) %>%
+  arrange(quantity) %>%
+  mutate(sample = factor(sample, levels = sample))
+```
+
+```{r,eval=FALSE, include=FALSE}
+# Generate the bar plot using ggplot2
+g <- ggplot(plotTab, aes(x = sample, y = total , fill = quantity)) +
+  geom_bar(stat = "identity") +
+  scale_fill_brewer(palette = "Set2") +
+  ggtitle("Total phosphosites for each sample (SmartPhos Protocol)") +
+  ylab("Total Phosphosites") +
+  theme_classic() +
+  theme(
+    axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0),
+    plot.title = element_text(hjust = 0.5, face = "bold")
+  ) 
+  
+g
+```
+
+```{r}
+# Generate the bar plot using ggplot2
+g <- ggplot(plotTab, aes(x = replicate, y = total , fill = quantity)) +
+  geom_bar(stat = "identity") +
+  scale_fill_brewer(palette = "Set2") +
+  ggtitle("Total phosphosites for each sample (SmartPhos Protocol)") +
+  ylab("Total Phosphosites") +
+  theme_classic() +
+  theme(legend.position = "none", 
+    plot.title = element_text(hjust = 0.5, face = "bold")
+  ) + ylab("Total number of detected phosphorylation sites") + xlab("Replicate") +
+  facet_grid(~ quantity, scales="free") 
+  
+g
+```
+This plot compares the total phosphosites detected in both experiments for 50ug
+samples. The plot shows that the SmartPhos experiment detects more 
+phosphosites as compared to the InSolutionDigest experiment. 
+
+```{r}
+seD <- seInSolution[, seInSolution$treatment == "HGF" 
+                    & seInSolution$quantity == "50ug"]
+countMatD <- assay(seD)
+plotTabD <- tibble(
+  sample = seD$sample,
+  replicate = seD$replicate,
+  total = colSums(!is.na(countMatD)),
+  experiment = "InSolutionDigest"
+)
+
+seT <- seTitration[, seTitration$treatment == "HGF" 
+                    & seTitration$quantity == "50ug"]
+countMatT <- assay(seT)
+plotTabT <- tibble(
+  sample = seT$sample,
+  replicate = seT$replicate,
+  total = colSums(!is.na(countMatT)), 
+  experiment = "SmartPhos"
+)
+
+plotTabComb <- rbind(plotTabD, plotTabT)
+```
+
+```{r,eval=FALSE, include=FALSE}
+# Generate the bar plot using ggplot2
+g <- ggplot(plotTabComb, aes(x = sample, y = total)) +
+  geom_bar(stat = "identity", aes(fill = experiment)) +
+  ggtitle("Total Number of Phosphosites for 50ug samples") +
+  ylab("Total sites") +
+  theme_classic() +
+  theme(
+    axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0),
+    plot.title = element_text(hjust = 0.5, face = "bold")
+  )
+g
+```
+
+```{r}
+# Generate the bar plot using ggplot2
+g <- ggplot(plotTabComb, aes(x = replicate, y = total)) +
+  geom_bar(stat = "identity" , aes(fill = experiment)) +
+  ggtitle("Comparison of Protocols for 50ug samples") +
+  ylab("Total number of detected phosphorylation sites") + xlab("Replicate") +
+  theme_classic() +
+  theme(legend.position = "none", 
+    plot.title = element_text(hjust = 0.5, face = "bold")
+  ) +
+  facet_grid(~ experiment, scales="free") 
+  
+g
+```
+
+
+# Common phosphosites
+
+```{r}
+library(ggvenn)
+
+# Filter for non-empty (non-NA) rows
+validD <- rowSums(!is.na(assay(seD))) > 0
+validT <- rowSums(!is.na(assay(seT))) > 0
+
+seDfilt <- seD[validD, ]
+seTfilt <- seT[validT, ]
+
+
+rd1 <- rowData(seDfilt)$site
+rd2 <- rowData(seTfilt)$site
+
+venn_list <- list(InSolutionDigest = rd1, SmartPhos = rd2)
+
+ggvenn(venn_list,
+       fill_color = c("tomato", "skyblue"),
+       stroke_size = 0.5, set_name_size = 5, text_size = 5)
+```
+
+```{r, eval=FALSE, include=FALSE}
+rd1 <- rowData(seD)$site
+rd2 <- rowData(seT)$site
+
+venn_list <- list(InSolutionDigest = rd1, SmartPhos = rd2)
+
+ggvenn(venn_list,
+       fill_color = c("tomato", "skyblue"),
+       stroke_size = 0.5, set_name_size = 4)
+```
+
+
+
+# Effect of Missing Rate Threshold on Phosphosite Retention
+
+This plot shows how the detection of phosphosites changes with the change in 
+allowed missing rate. The greater the allowed missing rate, the greater the 
+detection of phosphosites from overall samples. According to the plot:
+
+1. For the same quantity of 50ug samples, SmartPhos experiment performs 
+far better.
+2. 15ug samples from SmartPhos experiment performs comparable or better 
+than 50ug samples from InSolutionDigest experiment.
+3. 50ug samples give comparable phosphosite detection to 200ug and 750ug 
+samples in SmartPhos experiment. 
+
+```{r}
+seInSolution50 <- seInSolution[, seInSolution$sampleType == "PP" &
+                            seInSolution$treatment == "HGF"]
+seTitration5 <- seTitrationHGF[, seTitrationHGF$quantity == "5ug" &
+                                 seTitrationHGF$sampleType == "PP"]
+seTitration15 <- seTitrationHGF[, seTitrationHGF$quantity == "15ug" &
+                                 seTitrationHGF$sampleType == "PP"]
+seTitration50 <- seTitrationHGF[, seTitrationHGF$quantity == "50ug" &
+                                 seTitrationHGF$sampleType == "PP"]
+seTitration200 <- seTitrationHGF[, seTitrationHGF$quantity == "200ug" &
+                                 seTitrationHGF$sampleType == "PP"]
+seTitration750 <- seTitrationHGF[, seTitrationHGF$quantity == "750ug" &
+                                 seTitrationHGF$sampleType == "PP"]
+```
+
+```{r}
+calc_missing_curve <- function(exp, expName, thresholds = seq(0, 1, 0.15)) {
+  
+  data.frame(
+    missing_rate = thresholds,
+    n_sites = sapply(thresholds, function(th) {
+      # proportion of missing per row
+      row_missing <- rowMeans(is.na(exp))
+      sum(row_missing <= th)
+    }),
+    experiment = expName
+  )
+}
+
+expTitration5 <- calc_missing_curve(assay(seTitration5), "5ug")
+expTitration15 <- calc_missing_curve(assay(seTitration15), "15ug")
+expTitration50 <- calc_missing_curve(assay(seTitration50), "50ug")
+expTitration200 <- calc_missing_curve(assay(seTitration200), "200ug")
+expTitration750 <- calc_missing_curve(assay(seTitration750), "750ug")
+results <- bind_rows(expTitration5, expTitration15, 
+                     expTitration50, expTitration200, expTitration750)
+results <- results %>%
+  mutate(experiment = factor(experiment,
+                           levels = c("5ug","15ug","50ug","200ug","750ug"),
+                           ordered = TRUE)) %>%
+  arrange(experiment) 
+
+ggplot(results, aes(x = missing_rate, y = n_sites, color = experiment, 
+                    shape = experiment)) +
+  geom_line(linewidth = 1.1) +
+  geom_point(size = 2.5) +
+  scale_color_brewer(palette = "Set2") +
+  labs(
+    x = "Allowed Missing Rate",
+    y = "Number of Phosphosites Detected",
+    title = "Effect of Missing Rate Threshold on Phosphosite Retention (SmartPhos)"
+  ) +
+  theme_classic(base_size = 14)
+```
+```{r}
+expInSolution50 <- calc_missing_curve(assay(seInSolution50), "InSolutionDigest")
+expTitration50 <- calc_missing_curve(assay(seTitration50), "SmartPhos")
+results <- bind_rows(expInSolution50, expTitration50)
+
+ggplot(results, aes(x = missing_rate, y = n_sites, color = experiment, 
+                    shape = experiment)) +
+  geom_line(linewidth = 1.1) +
+  geom_point(size = 2.5) +
+  labs(
+    x = "Allowed Missing Rate",
+    y = "Number of Phosphosites Detected",
+    title = "Effect of Missing Rate Threshold on Phosphosite Retention for 50ug samples"
+  ) +
+  theme_classic(base_size = 14)
+```
+
+# Checking for specific phosphosites detected
+
+Given the list of receptors: EGFR, ERBB2, ERBB3, ERBB4, MET, PDGFRA, PDGFRB, 
+AXL, TGFBR1, TGFBR2, TGFBR3, ACVRL1, IL6R ,IL6ST ,TNFRSF1A, TNFRSF1B, IFNAR1, 
+IFNAR2, IFNGR1, IFNGR2.
+
+We check how many phosphosites detected are associated with the list of 
+relevant receptors. The following box-plot shows the distribution of number of 
+phosphosites detected per sample for different experiments. The plot shows 
+InSolutionDigest experiment does not detect many relevant phosphosites as 
+compared to the TitrationCurve experiement. 
+
+```{r}
+receptors <- c("EGFR", "ERBB2", "ERBB3", "ERBB4", "MET", "PDGFRA", "PDGFRB", 
+               "AXL" ,"TGFBR1", "TGFBR2", "TGFBR3", "ACVRL1", "IL6R", "IL6ST", 
+               "TNFRSF1A", "TNFRSF1B", "IFNAR1", "IFNAR2", "IFNGR1", "IFNGR2")
+
+rdTitration5 <- rowData(seTitration5)
+rdTitration15 <- rowData(seTitration15)
+rdTitration50 <- rowData(seTitration50)
+rdTitration200 <- rowData(seTitration200)
+rdTitration750 <- rowData(seTitration750)
+rdInSolution50 <- rowData(seInSolution50)
+
+rdTitration5Filter <- rdTitration5[rdTitration5$Gene %in% receptors, ]
+rdTitration15Filter <- rdTitration15[rdTitration15$Gene %in% receptors, ]
+rdTitration50Filter <- rdTitration50[rdTitration50$Gene %in% receptors, ]
+rdTitration200Filter <- rdTitration200[rdTitration200$Gene %in% receptors, ]
+rdTitration750Filter <- rdTitration5[rdTitration750$Gene %in% receptors, ]
+rdInSolution50Filter <- rdInSolution50[rdInSolution50$Gene %in% receptors, ]
+
+seTitration5Filter <- seTitration5[rownames(rdTitration5Filter), ]
+seTitration15Filter <- seTitration15[rownames(rdTitration15Filter), ]
+seTitration50Filter <- seTitration50[rownames(rdTitration50Filter), ]
+seTitration200Filter <- seTitration200[rownames(rdTitration200Filter), ]
+seTitration750Filter <- seTitration750[rownames(rdTitration750Filter), ]
+seInSolution50Filter <- seInSolution50[rownames(rdInSolution50Filter), ]
+```
+
+```{r}
+countSites <- function(se, experimentName) {
+  countExp <- assay(se)
+  plotTabExp <- tibble(
+    sample = se$sample,
+    count = colSums(!is.na(countExp)), 
+    experiment =  experimentName)
+  return(plotTabExp)
+}
+
+plotBoxTitrat5 <- countSites(se = seTitration5Filter, experimentName = "5ug")
+plotBoxTitrat15 <- countSites(se = seTitration15Filter, experimentName = "15ug")
+plotBoxTitrat50 <- countSites(se = seTitration50Filter, experimentName = "50ug")
+plotBoxTitrat200 <- countSites(se = seTitration200Filter, experimentName = "200ug")
+plotBoxTitrat750 <- countSites(se = seTitration750Filter, experimentName = "750ug")
+
+plotBoxTable <- bind_rows(plotBoxTitrat5, plotBoxTitrat15, plotBoxTitrat50, 
+                          plotBoxTitrat200, plotBoxTitrat750)
+
+
+bp <- plotBoxTable %>%
+  mutate(experiment = fct_relevel(experiment, "5ug", "15ug", "50ug", "200ug", "750ug")) %>%
+  ggplot(aes(x=as.factor(experiment), y=count)) + 
+  #geom_boxplot(aes(color = experiment)) + 
+  stat_summary(fun = mean, geom = "crossbar", width = 0.5, size = 0.4, color = "black") +
+  #geom_point(aes(color = experiment), alpha = 0.6, size = 3.0, position = position_identity()) +
+  geom_point(aes(color = experiment), alpha = 0.7, size = 4, position = position_jitter(width = 0.05)) +
+  scale_color_brewer(palette = "Set2") +
+  theme_classic() +
+  theme(legend.position = "none") +
+  xlab("Experiment") + ylab("Phosphosites detected") +
+  ggtitle("Box Plot of phosphosites detected per experiment")
+bp
+```
+
+```{r}
+bp <- plotBoxTable %>%
+  mutate(experiment = fct_relevel(experiment, "5ug", "15ug", "50ug", "200ug", "750ug")) %>%
+  ggplot(aes(x=as.factor(experiment), y=count)) + 
+  stat_summary(fun = mean, geom = "crossbar", width = 0.5, size = 0.4, color = "black") +
+  geom_point(aes(color = experiment), alpha = 0.7, size = 4.0, position = position_identity()) +
+  scale_color_brewer(palette = "Set2") +
+  theme_classic() +
+  theme(legend.position = "none") +
+  xlab("Experiment") + ylab("Phosphosites detected") +
+  ggtitle("Box Plot of phosphosites detected per experiment")
+bp
+```
+```{r}
+bp <- plotBoxTable %>%
+  mutate(experiment = fct_relevel(experiment, "5ug", "15ug", "50ug", "200ug", "750ug")) %>%
+  ggplot(aes(x=as.factor(experiment), y=count)) + 
+  stat_summary(fun = mean, geom = "crossbar", width = 0.5, size = 0.4, aes(color = experiment)) +
+  geom_point(aes(color = experiment), alpha = 0.7, size = 4.0, position = position_identity()) +
+  scale_color_brewer(palette = "Set2") +
+  theme_classic() +
+  theme(legend.position = "none") +
+  xlab("Experiment") + ylab("Phosphosites detected") +
+  ggtitle("Box Plot of phosphosites detected per experiment")
+bp
+```
+
+
+```{r}
+plotBoxInSol50 <- countSites(se = seInSolution50Filter, experimentName = "InSolutionDigest")
+plotBoxTitrat50 <- countSites(se = seTitration50Filter, experimentName = "SmartPhos")
+plotBoxTable <- bind_rows(plotBoxInSol50, plotBoxTitrat50)
+
+bp <- plotBoxTable %>%
+  mutate(experiment = fct_relevel(experiment, "InSolutionDigest 50ug", "SmartPhos 50ug")) %>%
+  ggplot(aes(x=as.factor(experiment), y=count)) + 
+  stat_summary(fun = mean, geom = "crossbar", width = 0.5, size = 0.4, color = "black") +
+  geom_point(aes(color = experiment), alpha = 0.7, size = 4.0, position = position_identity()) +
+  theme_classic() +
+  theme(legend.position = "none") +
+  xlab("Experiment") + ylab("Phosphosites detected") +
+  ggtitle("Box Plot of phosphosites detected per experiment")
+bp
+```
+
+# Process the Phosphoproteome assay
+
+Here, we apply different techniques to process the phosphoproteome assay before 
+going further in the analysis. We perform log2 transformation, median 
+normalization, filter out the rows with more than 50% missingness, impute the 
+assay.
+
+```{r, message=FALSE, warning=FALSE}
+seInSolProcess <- preprocessPhos(seData = seInSolution, transform = "log2",
+                                 normalize = TRUE, impute = "QRILC")
+seInSolProcess
+```
+```{r, message=FALSE, warning=FALSE}
+seTitratProcess <- preprocessPhos(seData = seTitration, transform = "log2",
+                                 normalize = TRUE, impute = "QRILC")
+seTitratProcess
+```
+```{r}
+seInSolProcessHGF <- seInSolProcess[, seInSolProcess$treatment == "HGF" ]
+seTitratProcessHGF <- seTitratProcess[, seTitratProcess$treatment == "HGF"]
+```
+
+# Principal Component Analysis
+
+We perform principal components analysis to visualize the spread of samples on 
+the two-dimensional space. For the InSolutionDigest experiment, the PCA plot 
+shows that the samples are spread. 
+
+In the SmartPhos experiment, samples with 50ug and 200ug are more 
+consistent (less spread) as compared to the samples with quantity 5ug, 15ug and 
+750ug.
+
+```{r}
+pcaTitratHGF <- stats::prcomp(t(assays(seTitratProcessHGF)[["imputed"]]), 
+                              center = TRUE, scale. = TRUE)
+plotPCAnalysis(pca = pcaTitratHGF, se = seTitratProcessHGF, color = "quantity", 
+               title = "Principal Components (SmartPhos)") + coord_equal()
+```
+
+# Get list of phosphosites
+
+```{r}
+getSites <- function(se, rd, experimentName) {
+  
+  siteList <- c()
+  for (i in rownames(rd)) {
+    if (sum(is.na(assay(se[i,]))) != 4) {
+      getRow = rd[i,]
+      site = paste0(getRow$Gene, "_", getRow$Residue, getRow$Position)
+      siteList <- c(siteList,site)
+    }}
+  # sitesTable <- data.frame(
+  #   experiment =  experimentName,
+  #   phosphosites = siteList)
+  return(siteList)
+  
+}
+
+sitesTitrat5 <- getSites(se = seTitration5Filter, 
+                             rd = rdTitration5Filter, 
+                             experimentName = "5ug")
+sitesTitrat15 <- getSites(se = seTitration15Filter, 
+                              rd = rdTitration15Filter,
+                              experimentName = "15ug")
+sitesTitrat50 <- getSites(se = seTitration50Filter,
+                              rd = rdTitration50Filter,
+                              experimentName = "50ug")
+sitesTitrat200 <- getSites(se = seTitration200Filter,
+                               rd = rdTitration200Filter,
+                               experimentName = "200ug")
+sitesTitrat750 <- getSites(se = seTitration750Filter, 
+                               rd = rdTitration750Filter,
+                               experimentName = "750ug")
+
+sitesInSol50 <- getSites(se = seInSolution50Filter, 
+                               rd = rdInSolution50Filter,
+                               experimentName = "750ug")
+```
+
+```{r}
+sitesTables <- list(
+  "InSolution50ug" = sitesInSol50,
+  "SmartPhos5ug" = sitesTitrat5,
+  "SmartPhos15ug" = sitesTitrat15,
+  "SmartPhos50ug" = sitesTitrat50,
+  "SmartPhos200ug" = sitesTitrat200,
+  "SmartPhos750ug" = sitesTitrat750
+)
+
+sitesTables
+```
+
+```{r}
+#capture.output(sitesTables, file = "sitesTable.txt")
+```
+
+```{r}
+# All unique sites
+#all_sites <- unique(unlist(sitesTables))
+long_sites <- enframe(sitesTables, name = "Sample", value = "Site") %>%
+  unnest(Site)
+
+sample_order <- c(
+  "InSolution50ug",
+  "SmartPhos5ug",
+  "SmartPhos15ug",
+  "SmartPhos50ug",
+  "SmartPhos200ug",
+  "SmartPhos750ug"
+)
+
+# Build long-format data
+heatmap_df <- expand_grid(
+  Sample = names(sitesTables),
+  Site   = unique(long_sites$Site)
+) %>%
+  left_join(
+    mutate(long_sites, Present = 1),
+    by = c("Sample", "Site")
+  ) %>%
+  mutate(Present = ifelse(is.na(Present), 0, Present))
+
+heatmap_df <- heatmap_df %>%
+  mutate(Present = factor(Present, levels = c(0, 1)),
+         Sample = factor(Sample, levels = sample_order))
+
+heatmap_df <- heatmap_df %>%
+  mutate(Protein = sub("_.*", "", Site))
+
+sample_order <- c(
+  "InSolution50ug",
+  "SmartPhos5ug",
+  "SmartPhos15ug",
+  "SmartPhos50ug",
+  "SmartPhos200ug",
+  "SmartPhos750ug"
+)
+
+heatmap_df <- heatmap_df %>%
+  mutate(Sample = factor(Sample, levels = sample_order))
+```
+
+```{r}
+# Sort sites by detection frequency
+# heatmap_df <- heatmap_df %>%
+#   group_by(Site) %>%
+#   mutate(freq = sum(Present)) %>%
+#   ungroup() %>%
+#   mutate(Site = reorder(Site, freq))
+```
+
+
+```{r}
+ggplot(heatmap_df, aes(x = Sample, y = Site, fill = factor(Present))) +
+  geom_tile(color = "white") +
+  scale_fill_manual(
+    values = c("0" = "white", "1" = "steelblue"),
+    name = "Detected"
+  ) +
+  theme_minimal() +
+  theme(
+    axis.text.y = element_text(size = 5),
+    axis.text.x = element_text(angle = 45, hjust = 1)
+  ) +
+  labs(x = "Sample", y = "Site", title = "Site Detection Heatmap")
+```
+```{r}
+ggplot(heatmap_df, aes(Sample, Site, fill = Present)) +
+  geom_tile(color = "grey90", linewidth = 0.3) +
+  scale_fill_manual(
+    values = c("0" = "white", "1" = "#2C7FB8"),
+    labels = c("Not detected", "Detected"),
+    name = "Site"
+  ) +
+  facet_grid(
+    Protein ~ .,
+    scales = "free_y",
+    space = "free_y"
+  ) +
+  theme_minimal(base_size = 12) +
+  theme(
+    axis.text.y = element_text(size = 4),
+    axis.text.x = element_text(angle = 90, hjust = 1, size = 7),
+    panel.grid = element_blank(),
+    strip.text.y = element_text(angle = 0, face = "bold", size = 5),
+    legend.position = "top"
+  ) +
+  labs(
+    x = NULL,
+    y = NULL,
+    title = "Phosphosite Detection Heatmap"
+  ) 
+
+```
+```{r}
+sample_order <- c(
+  "SmartPhos750ug",
+  "SmartPhos200ug",
+  "SmartPhos50ug",
+  "SmartPhos15ug",
+  "SmartPhos5ug",
+  "InSolution50ug"
+)
+
+heatmap_df <- heatmap_df %>%
+  mutate(Sample = factor(Sample, levels = sample_order))
+
+p_swapped <- ggplot(heatmap_df, aes(x = Site, y = Sample, fill = Present)) +
+  geom_tile(color = "grey85", linewidth = 0.3) +
+  scale_fill_manual(
+    values = c("0" = "white", "1" = "#2C7FB8"),
+    labels = c("Not detected", "Detected"),
+    name = "Site"
+  ) +
+  facet_grid(
+    . ~ Protein,              # ⬅ facet horizontally now
+    scales = "free_x",
+    space = "free_x"
+  ) +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1, size = 7, colour = "black"),
+    axis.text.y = element_text(size = 8, , colour = "black"),
+    strip.text.x = element_text(angle = 90, face = "bold", size = 7),
+    panel.grid = element_blank(),
+    legend.position = "top"
+  ) +
+  labs(
+    x = NULL,
+    y = NULL,
+    title = "Phosphosite Detection Heatmap"
+  )
+p_swapped
+```
+
