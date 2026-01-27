@@ -1,0 +1,327 @@
+---
+title: "SmartPhos: Titration Curve"
+author: "Shubham Agrawal"
+date: "2026-01-27"
+output:
+  BiocStyle::html_document:
+    toc_float: true
+    code_folding: "hide"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, dev = c("png","pdf"), fig.path = "./figureSmarPhos50ug/")
+library(MultiAssayExperiment)
+devtools::load_all("/Users/shubhamagrawal/Documents/work/SmartPhos")
+library(tidyverse)
+library(ggpubr)
+library(ggrepel)
+library(DT)
+source("helper.R")
+```
+
+# Create MultiAssayExperiment object
+
+For creating filetable, check generateFileTable.R script
+
+```{r, eval=FALSE}
+fileTable <- read.delim2(file = "data/TitrationCurve/fileTable.txt")
+mae <- readExperimentDIA(fileTable = fileTable, 
+                         annotation_col = c("cellLine", "treatment", 
+                                            "timepoint", "quantity", "tlevel",
+                                            "sampleType", "replicate"))
+mae
+```
+
+# Load the created mae object and get phosphoproteome assay
+
+```{r}
+maeAll <- readRDS("data/maeTitrationCurve.Rds")
+maeAll
+```
+
+```{r}
+mae <- maeAll[, maeAll$tlevel == "T2"]
+mae
+```
+
+
+```{r}
+se <- mae[["Phosphoproteome"]]
+colData(se) <- colData(mae)
+se
+```
+
+# Processing and subsetting the Phosphoproteome assay
+
+Perform: log2 transformation, median normalization, filter out the rows with 
+more than 50% missingness, imputation. Subset the processed object and keep
+only 50ug quantity samples. 
+
+```{r}
+newSE <- preprocessPhos(seData = se, transform = "log2", normalize = TRUE, 
+                        impute = "QRILC")
+se50 <- newSE[, newSE$quantity == "50ug"]
+se50
+```
+# Principal Component Analysis
+
+The PCA plot shows that in most cases (except for biological replicate R4), the 
+technical replicates (T1, T2, T3) are close to each other for both unstimulated 
+and HGF samples. 
+
+```{r, eval=FALSE, include=FALSE}
+pca <- stats::prcomp(t(assays(se50)[["imputed"]]), center = TRUE, 
+                     scale. = TRUE)
+# Calculate the proportion of variance explained by each principal component
+varExplained <- pca$sdev^2 / sum(pca$sdev^2)
+# Convert the PCA result to a data frame
+pcaDf <- as.data.frame(pca[["x"]])
+# Convert the metadata to a data frame
+meta <- as.data.frame(colData(se50))
+# Join the PCA scores with the metadata
+pcaMeta <- left_join(rownames_to_column(pcaDf),
+                     meta,
+                     by = c("rowname" = "sample")
+)
+
+# Create the initial ggplot object with labels for variance explained
+g <- ggplot(pcaMeta, aes(
+  x = PC1, y = PC2,
+  text = paste("sample:", meta$sample)
+)) +
+  theme_bw() +
+  theme(legend.position = "top") +
+  geom_point(aes(color = treatment, shape = replicate), size = 2, stroke = 0.8) +
+  labs(
+    x = paste0(
+      "PC1", ": ",
+      round(varExplained[as.numeric(strsplit("PC1", "PC")[[1]][2])] * 100,
+            1), "%"),
+    y = paste0(
+      "PC2", ": ",
+      round(varExplained[as.numeric(strsplit("PC2", "PC")[[1]][2])] * 100,
+            1), "%")
+  ) +
+  scale_shape(solid = FALSE) +
+  ggtitle("SmartPhos")
+g
+#ggsave("TitrationCurve50ug.pdf")
+```
+
+
+# Perform Differential expression analysis
+
+Perform differential expression analyis using limma package. Reference 
+condition is "unstimulated" and the target condition is "HGF". 
+
+```{r}
+deaT <- performDifferentialExp(se = se50, assay = "imputed", 
+                               method = "limma", condition = "treatment", 
+                               reference = "unstimulated", target = "HGF")
+
+datatable(deaT$resDE, options = list(pageLength = 5), caption = "Results") %>%
+  formatSignif(columns = c("log2FC", "stat", "pvalue", "padj"), digits = 4)
+```
+```{r}
+p <- ggplot(deaT$resDE, aes(x = pvalue)) +
+  geom_histogram(fill = "grey", col = "blue", alpha=0.7) +
+  ggtitle("P value histogram (SmartPhos)") + theme_classic() +
+  theme(plot.title = element_text(hjust = 0.5)) + ylim(0, 800)
+  
+p
+```
+
+
+```{r}
+labels <- c("MET_Y1003", "MAPK1_T190", "MAP7D3_S524", "CHEK2_S379", "CD2AP_S458", 
+            "TBC1D4_S591", "EPB41L1_S639")
+topLabels <- deaT$resDE[deaT$resDE$site %in% labels,]
+plotVolcanoDEA(deaT$resDE, fcFilter = 1, pFilter = 0.1, usePadj = TRUE) + 
+  ylim(0, 4) + xlim(-12, 12) +
+  geom_label_repel(   
+    data = topLabels,
+    aes(label = site,
+        colour = ifelse(log2FC > 0, "red", "blue")),
+    size = 3,
+    max.overlaps = 10,
+    fill = "white",             # background color of box
+    color = "black",            # text color
+    label.size = 0.25,          # border thickness
+    label.padding = unit(0.15, "lines"), # space around text
+    label.r = unit(0.15, "lines"),       # corner radius
+    box.padding = 0.5
+  ) +
+  ggtitle("Volcano plot (SmartPhos)")
+```
+
+```{r,eval=FALSE, include=FALSE}
+p1 <- intensityBoxPlot(se = deaT$seSub, id = 's11574', symbol = "PTPN11_Y580")
+p2 <- intensityBoxPlot(se = deaT$seSub, id = 's13315', symbol = "GAB1_Y659")
+p3 <- intensityBoxPlot(se = deaT$seSub, id = 's5007', symbol = "MET_Y1003")
+p4 <- intensityBoxPlot(se = deaT$seSub, id = 's5496', symbol = "TPR_S2155")
+ggarrange(p1, p2, p3, p4 + rremove("x.text"),
+          ncol = 2, nrow = 2)
+```
+
+# Enrichment analysis
+
+```{r, include=FALSE, eval=FALSE}
+inGMT <- piano::loadGSC("prior_knowledge/gmt/combined_ECM.gmt", type = "gmt")
+resTab <- enrichDifferential(dea = deaT$resDE, type = "Pathway enrichment", 
+                             gsaMethod = "PAGE", geneSet = inGMT, 
+                             statType = "stat", nPerm = 200, sigLevel = 0.5, 
+                             ifFDR = FALSE)
+datatable(resTab, options = list(pageLength = 5)) %>%
+  formatSignif(columns = c("Stat", "p.up", "p.up.adj", "p.down", "p.down.adj"), 
+               digits = 4)
+```
+
+```{r, include=FALSE, eval=FALSE}
+inGMT <- piano::loadGSC("prior_knowledge/gmt/combined_lung_cells.gmt", type = "gmt")
+resTab <- enrichDifferential(dea = deaT$resDE, type = "Pathway enrichment", 
+                             gsaMethod = "PAGE", geneSet = inGMT, 
+                             statType = "stat", nPerm = 200, sigLevel = 0.1, 
+                             ifFDR = FALSE)
+datatable(resTab, options = list(pageLength = 5)) %>%
+  formatSignif(columns = c("Stat", "p.up", "p.up.adj", "p.down", "p.down.adj"), 
+               digits = 4)
+```
+
+We use Cancer Hallmark geneset to perform enrichment analysis. We can use other 
+genesets also, provided the geneset file is in .gmt format. 
+
+```{r, message=FALSE}
+# Load the gene set
+genesetPath <- system.file("shiny-app/geneset", package = "SmartPhos")
+inGMT <- piano::loadGSC(paste0(genesetPath,"/Cancer_Hallmark.gmt"), type="gmt")
+# Call the function
+resTab <- enrichDifferential(dea = deaT$resDE, type = "Pathway enrichment", 
+                             gsaMethod = "PAGE", geneSet = inGMT, 
+                             statType = "stat", nPerm = 200, sigLevel = 0.05, 
+                             ifFDR = FALSE)
+datatable(resTab, options = list(pageLength = 5)) %>%
+  formatRound(columns = c("Stat", "p.up", "p.up.adj", "p.down", "p.down.adj"), 
+               digits = 3)
+```
+
+```{r, include=FALSE, eval=FALSE, eval=FALSE}
+source("giada/Enrichment_analysis.R")
+
+pathways <- readRDS("giada/Pathways_4Enrichment.rds")
+sorted_pathways = pathways$sorted_pathways
+GSEA_combined = pathways$GSEA_combined
+
+# log2FoldChange, stat, padj, SYMBOL variables
+
+resDEinSol <- dea$resDE
+resDEtitrat <- deaT$resDE
+
+colnames(resDEinSol)[which(names(resDEinSol) == "log2FC")] <- "log2FoldChange"
+colnames(resDEtitrat)[which(names(resDEtitrat) == "log2FC")] <- "log2FoldChange"
+colnames(resDEinSol)[which(names(resDEinSol) == "Gene")] <- "SYMBOL"
+colnames(resDEtitrat)[which(names(resDEtitrat) == "Gene")] <- "SYMBOL"
+
+list_DE_outputs = list(InSolutionDigest = resDEinSol, # ANALYSIS_1 is a data.frame with log2FoldChange, stat, padj, SYMBOL variables
+                       TitrationCurve = resDEtitrat)
+
+#Enrich_res = Compute_Enrichment(list_DE_outputs,
+#                                my_GeneSet = GSEA_combined,
+#                                my_sorted_pathways = sorted_pathways,
+#                                enrich_method = "camera")
+#Plot_Enrichment(Enrich_res, fold_name = "Enrichment_fig_camera")
+
+Enrich_res = Compute_Enrichment(list_DE_outputs,
+                                my_GeneSet = GSEA_combined,
+                                my_sorted_pathways = sorted_pathways,
+                                enrich_method = "gsea")
+Plot_Enrichment(Enrich_res, fold_name = "Enrichment_fig_gsea_disease")
+```
+
+
+# Kinase Activity Inference
+
+Kinase activity inference is based on phosphopeptides that are differentially 
+expressed. The activity is estimated by an activity score computed with the 
+package decoupleR:
+[Badia-I-Mompel et al., 2022](https://doi.org/10.1093/bioadv/vbac016)
+
+
+```{r}
+netw <- getDecouplerNetwork("Homo sapiens")
+scoreTabT <- calcKinaseScore(deaT$resDE, netw, statType = "stat", nPerm = 500)
+```
+
+The kinase activity is computed from comparing two conditions, hence it is 
+important to take into account the conditions when interpreting the result. A 
+positive score means that the kinase is more active in the selected condition 
+compared to the reference one, while a negative score means that the kinase is 
+more active in the reference condition.
+
+```{r}
+datatable(scoreTabT, options = list(pageLength = 10)) %>%
+  formatRound(columns = c("score", "p_value"), digits = 3)
+```
+
+```{r}
+p <- plotKinaseDE(scoreTabT, nTop = 10, pCut = 0.05) + ylim(-2, 8)
+p
+```
+
+# Compare DEA results
+
+```{r}
+maeInSol <- readRDS("data/maeInSolutionDigest.Rds")
+seInSol <- maeInSol[["Phosphoproteome"]]
+colData(seInSol) <- colData(maeInSol)
+newSEInSol <- preprocessPhos(seData = seInSol, transform = "log2", normalize = TRUE, 
+                        impute = "QRILC")
+dea <- performDifferentialExp(se = newSEInSol, assay = "imputed", method = "limma", 
+                              condition = "treatment", reference = "unstimulated", 
+                              target = "HGF")
+
+common_sites <- intersect(deaT$resDE$site, dea$resDE$site)
+
+resDE1 <- deaT$resDE
+resDE2 <- dea$resDE
+
+
+compare_df <- inner_join(
+  resDE1 %>% select(site, log2FC, pvalue),
+  resDE2 %>% select(site, log2FC, pvalue),
+  by = "site",
+  suffix = c("_tc", "_isd")
+)
+
+compare_df_unique <- compare_df %>%
+  distinct(site, .keep_all = TRUE)
+
+ggplot(compare_df_unique, aes(x = log2FC_tc, y = log2FC_isd)) +
+  geom_point(aes(color = (pvalue_tc < 0.05 & pvalue_isd < 0.05)), alpha = 0.6, size = 2) +
+  geom_abline(intercept = 0, slope = 1, color = "red", linetype = "dashed") +
+  scale_color_manual(values = c("grey60", "steelblue"),
+                     labels = c("Not sig. in both", "Sig. in both"),
+                     name = "Significance") +
+  labs(
+    title = "Comparison of log2FC across both experiments",
+    x = "log2FC (SmartPhos)",
+    y = "log2FC (InSolutionDigest)"
+  ) +
+  theme_classic()
+
+
+```
+
+```{r}
+library(ggvenn)
+
+sig1 <- resDE1[resDE1$padj < 0.1 & abs(resDE1$log2FC) >= 1, ]$site
+sig2 <- resDE2[resDE2$padj < 0.1 & abs(resDE2$log2FC) >= 1, ]$site
+
+venn_list <- list(InSolutionDigest = sig2, SmartPhos = sig1)
+
+ggvenn(venn_list,
+       fill_color = c("tomato", "skyblue"),
+       stroke_size = 0.5, set_name_size = 5, text_size = 5)
+```
+
+
