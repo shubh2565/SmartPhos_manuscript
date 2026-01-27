@@ -1,0 +1,182 @@
+---
+title: "SmartPhos InSolution Digest"
+author: "Shubham Agrawal"
+date: "2026-01-27"
+output:
+  BiocStyle::html_document:
+    toc_float: true
+    code_folding: "hide"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, dev = c("png","pdf"), fig.path = "./figureInSolDigest/")
+library(MultiAssayExperiment)
+devtools::load_all("/Users/shubhamagrawal/Documents/work/SmartPhos")
+library(tidyverse)
+library(ggpubr)
+library(ggrepel)
+library(DT)
+source("helper.R")
+```
+
+# Create MultiAssayExperiment object
+
+For creating filetable, check generateFileTable.R script
+
+```{r, eval=FALSE}
+fileTable <- read.delim2(file = "data/InSolutionDigest/fileTable.txt")
+mae <- readExperimentDIA(fileTable = fileTable, 
+                         annotation_col = c("cellLine", "treatment", 
+                                            "timepoint", "quantity",
+                                            "sampleType", "replicate"))
+mae
+```
+
+# Load created mae object and get phosphoproteome assay
+
+```{r}
+mae <- readRDS("data/maeInSolutionDigest.Rds")
+mae
+```
+```{r}
+se <- mae[["Phosphoproteome"]]
+colData(se) <- colData(mae)
+se
+```
+
+# Processing: transformation, normalization, impuation, filtering, etc.
+
+```{r}
+newSE <- preprocessPhos(seData = se, transform = "log2", normalize = TRUE, 
+                        impute = "QRILC")
+newSE
+```
+# Principal Component Analysis
+
+```{r}
+pca <- stats::prcomp(t(assays(newSE)[["imputed"]]), center = TRUE, 
+                     scale. = TRUE)
+p <- plotPCAnalysis(pca = pca, se = newSE, color = "treatment", 
+                    shape = "replicate") 
+p + ggtitle("InSolution Digest")
+```
+
+
+# Perform Differential expression analysis
+
+Perform differential expression analyis using limma package. Reference 
+condition is "unstimulated" and the target condition is "HGF". 
+
+```{r}
+dea <- performDifferentialExp(se = newSE, assay = "imputed", method = "limma", 
+                              condition = "treatment", reference = "unstimulated", 
+                              target = "HGF")
+datatable(dea$resDE, options = list(pageLength = 5)) %>%
+  formatSignif(columns = c("log2FC", "stat", "pvalue", "padj"), digits = 4) 
+```
+
+```{r}
+p <- ggplot(dea$resDE, aes(x = pvalue)) +
+  geom_histogram(fill = "grey", col = "blue", alpha=0.7) +
+  ggtitle("P value histogram (InSolution Digest)") + theme_classic() +
+  theme(plot.title = element_text(hjust = 0.5)) + ylim(0, 800)
+  
+p
+```
+
+```{r}
+labels <- c("TPR_T2116", "CD2AP_S458", 
+            "TBC1D4_S591", "EPB41L1_S639")
+topLabels <- dea$resDE[dea$resDE$site %in% labels,]
+plotVolcanoDEA(dea$resDE, fcFilter = 1, pFilter = 0.1, usePadj = TRUE) + 
+  ylim(0, 4) + xlim(-12, 12) +
+  geom_label_repel(   
+    data = topLabels,
+    aes(label = site,
+        colour = ifelse(log2FC > 0, "red", "blue")),
+    size = 3,
+    max.overlaps = 10,
+    fill = "white",             # background color of box
+    color = "black",            # text color
+    label.size = 0.25,          # border thickness
+    label.padding = unit(0.15, "lines"), # space around text
+    label.r = unit(0.15, "lines"),       # corner radius
+    box.padding = 0.5
+  ) +
+  ggtitle("Volcano plot (InSolution Digest)")
+```
+
+```{r}
+p1 <- intensityBoxPlot(se = dea$seSub, id = 's11574', symbol = "PTPN11_Y580")
+p2 <- intensityBoxPlot(se = dea$seSub, id = 's13315', symbol = "GAB1_Y659")
+p3 <- intensityBoxPlot(se = dea$seSub, id = 's5007', symbol = "MET_Y1003")
+p4 <- intensityBoxPlot(se = dea$seSub, id = 's2327', symbol = "TPR_S2155")
+ggarrange(p1, p2, p3, p4 + rremove("x.text"),
+          ncol = 2, nrow = 2)
+```
+
+# Enrichment analysis
+
+
+```{r, include=FALSE, eval=FALSE}
+inGMT <- piano::loadGSC("prior_knowledge/gmt/combined_ECM.gmt", type = "gmt")
+resTab <- enrichDifferential(dea = dea$resDE, type = "Pathway enrichment", 
+                             gsaMethod = "PAGE", geneSet = inGMT, 
+                             statType = "stat", nPerm = 200, sigLevel = 0.5, 
+                             ifFDR = FALSE)
+datatable(resTab, options = list(pageLength = 5)) %>%
+  formatRound(columns = c("Stat", "p.up", "p.up.adj", "p.down", "p.down.adj"), 
+               digits = 4) 
+```
+
+```{r, include=FALSE, eval=FALSE}
+inGMT <- piano::loadGSC("prior_knowledge/gmt/combined_lung_cells.gmt", type = "gmt")
+resTab <- enrichDifferential(dea = dea$resDE, type = "Pathway enrichment", 
+                             gsaMethod = "PAGE", geneSet = inGMT, 
+                             statType = "stat", nPerm = 200, sigLevel = 0.1, 
+                             ifFDR = FALSE)
+datatable(resTab, options = list(pageLength = 5)) %>%
+  formatSignif(columns = c("Stat", "p.up", "p.up.adj", "p.down", "p.down.adj"), 
+               digits = 4)
+```
+```{r, message=FALSE}
+# Load the gene set
+genesetPath <- system.file("shiny-app/geneset", package = "SmartPhos")
+inGMT <- piano::loadGSC(paste0(genesetPath,"/Cancer_Hallmark.gmt"), type="gmt")
+# Call the function
+resTab <- enrichDifferential(dea = dea$resDE, type = "Pathway enrichment", 
+                             gsaMethod = "PAGE", geneSet = inGMT, 
+                             statType = "stat", nPerm = 200, sigLevel = 0.05, 
+                             ifFDR = FALSE)
+datatable(resTab, options = list(pageLength = 5)) %>%
+  formatRound(columns = c("Stat", "p.up", "p.up.adj", "p.down", "p.down.adj"), 
+               digits = 3)
+```
+
+# Kinase Activity Inference
+
+Kinase activity inference is based on phosphopeptides that are differentially 
+expressed. The activity is estimated by an activity score computed with the 
+package decoupleR:
+[Badia-I-Mompel et al., 2022](https://doi.org/10.1093/bioadv/vbac016)
+
+```{r}
+netw <- getDecouplerNetwork("Homo sapiens")
+scoreTab <- calcKinaseScore(dea$resDE, netw, statType = "stat", nPerm = 500)
+```
+
+The kinase activity is computed from comparing two conditions, hence it is 
+important to take into account the conditions when interpreting the result. A 
+positive score means that the kinase is more active in the selected condition 
+compared to the reference one, while a negative score means that the kinase is 
+more active in the reference condition.
+
+```{r}
+datatable(scoreTab, options = list(pageLength = 10)) %>%
+  formatRound(columns = c("score", "p_value"), digits = 3)
+```
+
+```{r}
+p <- plotKinaseDE(scoreTab, nTop = 10, pCut = 0.05) + ylim(-2, 8)
+p
+```
