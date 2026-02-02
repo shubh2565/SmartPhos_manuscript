@@ -630,7 +630,78 @@ heatmap_df <- heatmap_df %>%
   mutate(Sample = factor(Sample, levels = sample_order))
 
 p_swapped <- ggplot(heatmap_df, aes(x = Site, y = Sample, fill = Present)) +
-  geom_tile(color = "grey85", linewidth = 0.3) +
+  geom_tile(color = "black", linewidth = 0.3) +
+  scale_fill_manual(
+    values = c("0" = "white", "1" = "#2C7FB8"),
+    labels = c("Not detected", "Detected"),
+    name = "Site"
+  ) +
+  facet_grid(
+    . ~ Protein,              # ⬅ facet horizontally now
+    scales = "free_x",
+    space = "free_x"
+  ) +
+  theme_minimal() +
+  theme(
+    axis.text.x = element_text(angle = 90, vjust = 0.5, hjust = 1, size = 7, colour = "black"),
+    axis.text.y = element_text(size = 8, , colour = "black"),
+    strip.text.x = element_text(angle = 90, face = "bold", size = 7),
+    panel.grid = element_blank(),
+    legend.position = "top"
+  ) +
+  labs(
+    x = NULL,
+    y = NULL,
+    title = "Phosphosite Detection Heatmap"
+  )
+p_swapped
+```
+
+```{r}
+sitesTablesCompare <- list(
+  "InSolution50ug" = sitesInSol50,
+  "SmartPhos50ug" = sitesTitrat50
+)
+
+
+long_sites <- enframe(sitesTablesCompare, name = "Sample", value = "Site") %>%
+  unnest(Site)
+
+sample_order <- c(
+  "SmartPhos50ug",
+  "InSolution50ug"
+)
+
+# Build long-format data
+heatmap_df <- expand_grid(
+  Sample = names(sitesTablesCompare),
+  Site   = unique(long_sites$Site)
+) %>%
+  left_join(
+    mutate(long_sites, Present = 1),
+    by = c("Sample", "Site")
+  ) %>%
+  mutate(Present = ifelse(is.na(Present), 0, Present))
+
+heatmap_df <- heatmap_df %>%
+  mutate(Present = factor(Present, levels = c(0, 1)),
+         Sample = factor(Sample, levels = sample_order))
+
+heatmap_df <- heatmap_df %>%
+  mutate(Protein = sub("_.*", "", Site))
+
+sample_order <- c(
+  "InSolution50ug",
+  "SmartPhos50ug"
+)
+
+heatmap_df <- heatmap_df %>%
+  mutate(Sample = factor(Sample, levels = sample_order))
+```
+
+```{r heatmap_phosphosites_comparison}
+p_swapped <- ggplot(heatmap_df, aes(x = Site, y = Sample, fill = Present)) +
+  geom_tile(color = "black", linewidth = 0.3) +
   scale_fill_manual(
     values = c("0" = "white", "1" = "#2C7FB8"),
     labels = c("Not detected", "Detected"),
