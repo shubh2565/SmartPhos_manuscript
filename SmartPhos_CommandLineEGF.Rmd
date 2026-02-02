@@ -46,7 +46,7 @@ colData(se) <- colData(mae[, colnames(se)])
 se
 ```
 
-```{r}
+```{r boxplot_unnormalized}
 plotIntensity(se[, se$sampleType == "Phospho"], color = "replicate") + theme_classic() +
   theme(
     axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0, size = 7),
@@ -60,14 +60,14 @@ newSE <- preprocessPhos(seData = se, transform = "log2",
                         normalize = TRUE, impute = "QRILC")
 newSE
 ```
-```{r}
+```{r boxplot}
 plotIntensity(newSE, color = "replicate") + theme_classic() +
   theme(
     axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0, size = 7),
     plot.title = element_text(hjust = 0.5, face = "bold")
   ) 
 ```
-```{r}
+```{r sample_completeness}
 plotMissing(newSE) + theme_classic() +
   theme(
     axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0, size = 7),
@@ -95,7 +95,7 @@ p
 ```
 
 
-```{r}
+```{r pca_withR1}
 p <- plotPCA(pca = pca, se = newSE,
              color = "treatment",
              shape = "replicate")
@@ -111,7 +111,7 @@ p + coord_equal() + theme(aspect.ratio = 1, legend.position = "right",
     )
 ```
 
-```{r}
+```{r, eval=FALSE, include=FALSE}
 p <- plotPCA(pca = pca, se = newSE,
              color = "replicate",
              shape = "treatment")
@@ -153,7 +153,7 @@ p <- plotPCA(pca = pca, se = newSE, color = "replicate") +
 p
 ```
 
-```{r}
+```{r pca_withoutR1}
 p <- plotPCA(pca = pca, se = newSE,
              color = "treatment",
              shape = "replicate")
@@ -168,7 +168,7 @@ p + coord_equal() + theme(aspect.ratio = 1, legend.position = "right",
     color = guide_legend(order = 2)
     )
 ```
-```{r}
+```{r, eval=FALSE, include=FALSE}
 p <- plotPCA(pca = pca, se = newSE,
              color = "replicate",
              shape = "treatment")
@@ -185,9 +185,9 @@ p + coord_equal() + theme(aspect.ratio = 1, legend.position = "right",
 ```
 
 ```{r}
-p <- plotHeatmap(type = "Top variant", newSE, top = 30, annotationCol = c("replicate", "treatment")) 
+p <- plotHeatmap(type = "Top variant", newSE, top = 30, annotationCol = c("replicate", "treatment"))
 ```
-```{r,fig.width=10, fig.height=8}
+```{r heatmap, fig.width=10, fig.height=8}
 g <- p$gtable
 
 # Find row names grob
@@ -213,7 +213,7 @@ dea <- performDifferentialExp(se = newSE,
                               target = "EGF")
 ```
 
-```{r}
+```{r pValue_histogram}
 p <- ggplot(dea$resDE, aes(x = pvalue)) +
   geom_histogram(fill = "grey", col = "blue", alpha=0.7) +
   ggtitle("P value histogram") + theme_classic() +
@@ -285,7 +285,7 @@ plotVolcanoPhoto(deaPhoto$resDE, pFilter = 0.01, fcFilter = 1)
 
 
 
-```{r}
+```{r volcanoPlot_fromPackage}
 pFilter = 0.01
 plotVolcano(dea$resDE, pFilter = 0.01, fcFilter = 1) + theme_classic() +
   geom_hline(yintercept = -log10(as.numeric(pFilter)), color = "brown",
@@ -294,7 +294,7 @@ plotVolcano(dea$resDE, pFilter = 0.01, fcFilter = 1) + theme_classic() +
              label = paste0("P-value = ", as.numeric(pFilter)),
              geom = "text", size = 3.5, color = "brown") 
 ```
-```{r}
+```{r volcanoPlot_notFromPackage}
 plotVolcanoDEA(dea$resDE, fcFilter = 1, pFilter = 0.01, usePadj = FALSE)
 ```
 
@@ -305,7 +305,7 @@ dea$resDE
 
 
 
-```{r}
+```{r intensityBoxPlot_specificPhophosite}
 intensityBoxPlot(se = dea$seSub, id = 's4971', symbol = "EGFR_S991")
 ```
 
@@ -337,7 +337,7 @@ exprMat <- exprMat[complete.cases(exprMat), ]
 tsc <- clusterTS(x = exprMat, k = 5, pCut = 0.6)
 ```
 
-```{r}
+```{r timeSeries}
 tsc$plot + theme(
   axis.text.x = element_text(size = 10), axis.text = element_text(color = "#000000"), ) 
 ```
@@ -346,7 +346,7 @@ tsc$plot + theme_void() + theme(legend.position = "none", strip.text = element_t
 ```
 
 
-```{r, echo=FALSE, include=FALSE}
+```{r, eval=FALSE, include=FALSE}
 timerange <- unique(newSEts$timepoint)
 p <- plotTimeSeries(newSEts, type = "expression", geneID = "s40", symbol = "RBM47_T519", condition = "treatment", treatment = "EGF", timerange = timerange)
 p
@@ -388,9 +388,13 @@ inGMT2 <- piano::loadGSC(paste0(genesetPath, "/KEGG_pathways.gmt"),
                          type="gmt")
 clustEnr <- clusterEnrich(clusterTab = tsc$cluster, se = newSE, 
                           inputSet = inGMT2, filterP = 0.01, ifFDR = FALSE)
+```
+
+```{r, include=FALSE, eval=FALSE}
 clustEnr$plot + theme_light() + theme(axis.text = element_text(color = "#000000"))
 ```
-```{r}
+
+```{r cluster_enrichment}
 clustEnr$plot + theme_classic()
 ```
 
@@ -399,7 +403,7 @@ clustEnr$plot + theme_classic()
 
 First on the differential expression analysis results
 
-```{r}
+```{r kinaseActivity}
 netw <- getDecouplerNetwork("Homo sapiens")
 scoreTab <- calcKinaseScore(dea$resDE, netw, statType = "stat", nPerm = 100)
 plotKinaseDE(scoreTab, nTop = 10, pCut = 0.05)
@@ -422,7 +426,7 @@ plotKinaseTimeSeries(scoreTab, pCut = 0.05, clusterName = "cluster1")
 
 # Phosphosites pattern
 
-```{r}
+```{r phophosites}
 newSEts <- addZeroTime(newSE, condition = "treatment", treat = "EGF",
                        zeroTreat = "1stCtrl",
                        timeRange = c("20min","40min","100min"))
@@ -440,15 +444,17 @@ for (i in sites) {
                         geneID = rownames(rd[rd$site==i,]), 
                         symbol = i, condition = "treatment", 
                         treatment = "EGF", timerange = timerange) +
-        theme(axis.text = element_text(color = "#000000"), 
-              axis.text.x = element_text(angle = 0, vjust = 0, hjust = 0.5, size=12.5)) + 
+        theme(axis.text = element_text(color = "#000000", size = 20), 
+              axis.text.x = element_text(angle = 0, vjust = 0, hjust = 0.5, size = 20),
+              axis.title = element_text(size=20),
+              plot.title = element_text(size=30)) + 
         scale_x_continuous(breaks = c(0,20,40,60,80,100))
-      p$layers[[1]]$aes_params$size <- 4
+      p$layers[[1]]$aes_params$size <- 6
       p$layers[[1]]$mapping$colour <- NULL
       p$layers[[1]]$aes_params$colour <- "#c1191f"
-      p$layers[[2]]$aes_params$linewidth <- 1
+      p$layers[[2]]$aes_params$linewidth <- 4
       p$layers[[2]]$mapping$colour <- NULL
-      p$layers[[2]]$aes_params$colour <- "#000000"
+      p$layers[[2]]$aes_params$colour <- "#555555"
       print(p)
     }
   }
