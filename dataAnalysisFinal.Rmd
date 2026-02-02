@@ -1,7 +1,7 @@
 ---
 title: "Data Analysis Final"
 author: "Shubham Agrawal"
-date: "2026-01-26"
+date: "2026-02-02"
 output:
   BiocStyle::html_document:
     toc_float: true
@@ -106,7 +106,7 @@ g <- ggplot(plotTab, aes(x = sample, y = total , fill = quantity)) +
 g
 ```
 
-```{r}
+```{r totalPhosphosites_SmartPhos}
 # Generate the bar plot using ggplot2
 g <- ggplot(plotTab, aes(x = replicate, y = total , fill = quantity)) +
   geom_bar(stat = "identity") +
@@ -163,7 +163,7 @@ g <- ggplot(plotTabComb, aes(x = sample, y = total)) +
 g
 ```
 
-```{r}
+```{r totalPhosphosites_comparison}
 # Generate the bar plot using ggplot2
 g <- ggplot(plotTabComb, aes(x = replicate, y = total)) +
   geom_bar(stat = "identity" , aes(fill = experiment)) +
@@ -181,7 +181,7 @@ g
 
 # Common phosphosites
 
-```{r}
+```{r commonPhosphosites}
 library(ggvenn)
 
 # Filter for non-empty (non-NA) rows
@@ -243,7 +243,7 @@ seTitration750 <- seTitrationHGF[, seTitrationHGF$quantity == "750ug" &
                                  seTitrationHGF$sampleType == "PP"]
 ```
 
-```{r}
+```{r missingRate_Phosphosites_retention}
 calc_missing_curve <- function(exp, expName, thresholds = seq(0, 1, 0.15)) {
   
   data.frame(
@@ -282,7 +282,7 @@ ggplot(results, aes(x = missing_rate, y = n_sites, color = experiment,
   ) +
   theme_classic(base_size = 14)
 ```
-```{r}
+```{r missingRate_comparison}
 expInSolution50 <- calc_missing_curve(assay(seInSolution50), "InSolutionDigest")
 expTitration50 <- calc_missing_curve(assay(seTitration50), "SmartPhos")
 results <- bind_rows(expInSolution50, expTitration50)
@@ -356,8 +356,10 @@ plotBoxTitrat750 <- countSites(se = seTitration750Filter, experimentName = "750u
 
 plotBoxTable <- bind_rows(plotBoxTitrat5, plotBoxTitrat15, plotBoxTitrat50, 
                           plotBoxTitrat200, plotBoxTitrat750)
+```
 
 
+```{r, include=FALSE, eval=FALSE}
 bp <- plotBoxTable %>%
   mutate(experiment = fct_relevel(experiment, "5ug", "15ug", "50ug", "200ug", "750ug")) %>%
   ggplot(aes(x=as.factor(experiment), y=count)) + 
@@ -373,7 +375,7 @@ bp <- plotBoxTable %>%
 bp
 ```
 
-```{r}
+```{r phosphosites_detected_perExperiment}
 bp <- plotBoxTable %>%
   mutate(experiment = fct_relevel(experiment, "5ug", "15ug", "50ug", "200ug", "750ug")) %>%
   ggplot(aes(x=as.factor(experiment), y=count)) + 
@@ -383,10 +385,10 @@ bp <- plotBoxTable %>%
   theme_classic() +
   theme(legend.position = "none") +
   xlab("Experiment") + ylab("Phosphosites detected") +
-  ggtitle("Box Plot of phosphosites detected per experiment")
+  ggtitle("Number of phosphosites detected per experiment")
 bp
 ```
-```{r}
+```{r, include=FALSE, eval=FALSE}
 bp <- plotBoxTable %>%
   mutate(experiment = fct_relevel(experiment, "5ug", "15ug", "50ug", "200ug", "750ug")) %>%
   ggplot(aes(x=as.factor(experiment), y=count)) + 
@@ -401,7 +403,7 @@ bp
 ```
 
 
-```{r}
+```{r phosphosites_detected_comparison}
 plotBoxInSol50 <- countSites(se = seInSolution50Filter, experimentName = "InSolutionDigest")
 plotBoxTitrat50 <- countSites(se = seTitration50Filter, experimentName = "SmartPhos")
 plotBoxTable <- bind_rows(plotBoxInSol50, plotBoxTitrat50)
@@ -414,7 +416,7 @@ bp <- plotBoxTable %>%
   theme_classic() +
   theme(legend.position = "none") +
   xlab("Experiment") + ylab("Phosphosites detected") +
-  ggtitle("Box Plot of phosphosites detected per experiment")
+  ggtitle("Total number of phosphosites detected per experiment")
 bp
 ```
 
@@ -450,11 +452,11 @@ In the SmartPhos experiment, samples with 50ug and 200ug are more
 consistent (less spread) as compared to the samples with quantity 5ug, 15ug and 
 750ug.
 
-```{r}
+```{r pca}
 pcaTitratHGF <- stats::prcomp(t(assays(seTitratProcessHGF)[["imputed"]]), 
                               center = TRUE, scale. = TRUE)
 plotPCAnalysis(pca = pcaTitratHGF, se = seTitratProcessHGF, color = "quantity", 
-               title = "Principal Components (SmartPhos)") + coord_equal()
+               title = "Principal Components (SmartPhos)") + coord_equal() + scale_color_brewer(palette = "Set2") 
 ```
 
 # Get list of phosphosites
@@ -570,7 +572,7 @@ heatmap_df <- heatmap_df %>%
 ```
 
 
-```{r}
+```{r, eval=FALSE, include=FALSE}
 ggplot(heatmap_df, aes(x = Sample, y = Site, fill = factor(Present))) +
   geom_tile(color = "white") +
   scale_fill_manual(
@@ -584,7 +586,7 @@ ggplot(heatmap_df, aes(x = Sample, y = Site, fill = factor(Present))) +
   ) +
   labs(x = "Sample", y = "Site", title = "Site Detection Heatmap")
 ```
-```{r}
+```{r eval=FALSE, include=FALSE}
 ggplot(heatmap_df, aes(Sample, Site, fill = Present)) +
   geom_tile(color = "grey90", linewidth = 0.3) +
   scale_fill_manual(
@@ -612,7 +614,9 @@ ggplot(heatmap_df, aes(Sample, Site, fill = Present)) +
   ) 
 
 ```
-```{r}
+
+
+```{r heatmap_phosphosites}
 sample_order <- c(
   "SmartPhos750ug",
   "SmartPhos200ug",
