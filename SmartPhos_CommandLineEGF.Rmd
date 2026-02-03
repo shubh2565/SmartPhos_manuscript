@@ -1,7 +1,7 @@
 ---
 title: "SmartPhos command line"
 author: "Shubham Agrawal"
-date: "2026-01-29"
+date: "2026-02-03"
 output:
   BiocStyle::html_document:
     toc_float: true
@@ -452,7 +452,7 @@ for (i in sites) {
       p$layers[[1]]$aes_params$size <- 6
       p$layers[[1]]$mapping$colour <- NULL
       p$layers[[1]]$aes_params$colour <- "#c1191f"
-      p$layers[[2]]$aes_params$linewidth <- 1.5
+      p$layers[[2]]$aes_params$linewidth <- 1
       p$layers[[2]]$mapping$colour <- NULL
       p$layers[[2]]$aes_params$colour <- "#555555"
       print(p)

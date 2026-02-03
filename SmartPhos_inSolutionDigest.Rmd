@@ -1,7 +1,7 @@
 ---
 title: "SmartPhos InSolution Digest"
 author: "Shubham Agrawal"
-date: "2026-01-27"
+date: "2026-02-03"
 output:
   BiocStyle::html_document:
     toc_float: true
@@ -53,7 +53,7 @@ newSE
 ```
 # Principal Component Analysis
 
-```{r}
+```{r pca}
 pca <- stats::prcomp(t(assays(newSE)[["imputed"]]), center = TRUE, 
                      scale. = TRUE)
 p <- plotPCAnalysis(pca = pca, se = newSE, color = "treatment", 
@@ -75,7 +75,7 @@ datatable(dea$resDE, options = list(pageLength = 5)) %>%
   formatSignif(columns = c("log2FC", "stat", "pvalue", "padj"), digits = 4) 
 ```
 
-```{r}
+```{r pValue_histogram}
 p <- ggplot(dea$resDE, aes(x = pvalue)) +
   geom_histogram(fill = "grey", col = "blue", alpha=0.7) +
   ggtitle("P value histogram (InSolution Digest)") + theme_classic() +
@@ -84,7 +84,7 @@ p <- ggplot(dea$resDE, aes(x = pvalue)) +
 p
 ```
 
-```{r}
+```{r volcanoPlot}
 labels <- c("TPR_T2116", "CD2AP_S458", 
             "TBC1D4_S591", "EPB41L1_S639")
 topLabels <- dea$resDE[dea$resDE$site %in% labels,]
@@ -106,7 +106,7 @@ plotVolcanoDEA(dea$resDE, fcFilter = 1, pFilter = 0.1, usePadj = TRUE) +
   ggtitle("Volcano plot (InSolution Digest)")
 ```
 
-```{r}
+```{r intensityBoxPlot}
 p1 <- intensityBoxPlot(se = dea$seSub, id = 's11574', symbol = "PTPN11_Y580")
 p2 <- intensityBoxPlot(se = dea$seSub, id = 's13315', symbol = "GAB1_Y659")
 p3 <- intensityBoxPlot(se = dea$seSub, id = 's5007', symbol = "MET_Y1003")
@@ -176,7 +176,7 @@ datatable(scoreTab, options = list(pageLength = 10)) %>%
   formatRound(columns = c("score", "p_value"), digits = 3)
 ```
 
-```{r}
+```{r kinaseActivity}
 p <- plotKinaseDE(scoreTab, nTop = 10, pCut = 0.05) + ylim(-2, 8)
 p
 ```

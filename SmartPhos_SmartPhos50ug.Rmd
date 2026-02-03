@@ -1,7 +1,7 @@
 ---
 title: "SmartPhos: Titration Curve"
 author: "Shubham Agrawal"
-date: "2026-01-27"
+date: "2026-02-03"
 output:
   BiocStyle::html_document:
     toc_float: true
@@ -122,7 +122,7 @@ deaT <- performDifferentialExp(se = se50, assay = "imputed",
 datatable(deaT$resDE, options = list(pageLength = 5), caption = "Results") %>%
   formatSignif(columns = c("log2FC", "stat", "pvalue", "padj"), digits = 4)
 ```
-```{r}
+```{r pValueHistogram}
 p <- ggplot(deaT$resDE, aes(x = pvalue)) +
   geom_histogram(fill = "grey", col = "blue", alpha=0.7) +
   ggtitle("P value histogram (SmartPhos)") + theme_classic() +
@@ -132,7 +132,7 @@ p
 ```
 
 
-```{r}
+```{r volcanoPlot}
 labels <- c("MET_Y1003", "MAPK1_T190", "MAP7D3_S524", "CHEK2_S379", "CD2AP_S458", 
             "TBC1D4_S591", "EPB41L1_S639")
 topLabels <- deaT$resDE[deaT$resDE$site %in% labels,]
@@ -154,7 +154,7 @@ plotVolcanoDEA(deaT$resDE, fcFilter = 1, pFilter = 0.1, usePadj = TRUE) +
   ggtitle("Volcano plot (SmartPhos)")
 ```
 
-```{r,eval=FALSE, include=FALSE}
+```{r intensityBoxPlot}
 p1 <- intensityBoxPlot(se = deaT$seSub, id = 's11574', symbol = "PTPN11_Y580")
 p2 <- intensityBoxPlot(se = deaT$seSub, id = 's13315', symbol = "GAB1_Y659")
 p3 <- intensityBoxPlot(se = deaT$seSub, id = 's5007', symbol = "MET_Y1003")
@@ -262,14 +262,14 @@ datatable(scoreTabT, options = list(pageLength = 10)) %>%
   formatRound(columns = c("score", "p_value"), digits = 3)
 ```
 
-```{r}
+```{r kinaseActivity}
 p <- plotKinaseDE(scoreTabT, nTop = 10, pCut = 0.05) + ylim(-2, 8)
 p
 ```
 
 # Compare DEA results
 
-```{r}
+```{r log2FC_comparison}
 maeInSol <- readRDS("data/maeInSolutionDigest.Rds")
 seInSol <- maeInSol[["Phosphoproteome"]]
 colData(seInSol) <- colData(maeInSol)
@@ -311,7 +311,7 @@ ggplot(compare_df_unique, aes(x = log2FC_tc, y = log2FC_isd)) +
 
 ```
 
-```{r}
+```{r differential_phosphosites_comparision}
 library(ggvenn)
 
 sig1 <- resDE1[resDE1$padj < 0.1 & abs(resDE1$log2FC) >= 1, ]$site
