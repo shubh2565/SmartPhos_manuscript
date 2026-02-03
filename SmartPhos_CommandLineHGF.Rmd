@@ -158,7 +158,7 @@ p + coord_equal() + theme(aspect.ratio = 1, legend.position = "right",
 ```{r heatmap}
 p <- plotHeatmap(type = "Top variant", newSE, top = 30, annotationCol = c("replicate", "treatment")) 
 ```
-```{r,fig.width=10, fig.height=8}
+```{r heatmapUpdated,fig.width=10, fig.height=8}
 g <- p$gtable
 
 # Find row names grob
@@ -373,7 +373,7 @@ plotKinaseTimeSeries(scoreTab, pCut = 0.05, clusterName = "cluster1")
 
 # Phosphosites pattern
 
-```{r}
+```{r phophosites}
 newSEts <- addZeroTime(newSE, condition = "treatment", treat = "HGF", 
                        zeroTreat = "2ndCtrl", 
                        timeRange = c("20min","40min","100min"))
