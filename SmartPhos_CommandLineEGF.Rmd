@@ -105,6 +105,7 @@ p$layers[[1]]$aes_params$stroke <- 1.2
 
 p + coord_equal() + theme(aspect.ratio = 1, legend.position = "right",
                           axis.text = element_text(color = "#000000")) +
+  geom_text_repel(aes(label = timepoint), max.overlaps = Inf, size = 2.75) +
   guides(
     shape = guide_legend(order = 1),
     color = guide_legend(order = 2)
@@ -163,6 +164,7 @@ p$layers[[1]]$aes_params$stroke <- 1.2
 
 p + coord_equal() + theme(aspect.ratio = 1, legend.position = "right",
                           axis.text = element_text(color = "#000000")) +
+  geom_text_repel(aes(label = timepoint), max.overlaps = Inf, size = 2.75) +
   guides(
     shape = guide_legend(order = 1),
     color = guide_legend(order = 2)
@@ -315,11 +317,11 @@ intensityBoxPlot(se = dea$seSub, id = 's4971', symbol = "EGFR_S991")
 set.seed(12345)
 library(matrixStats)
 
-# newSEts <- addZeroTime(newSE, condition = "treatment", treat = "EGF",
-#                        zeroTreat = "1stCtrl",
-#                        timeRange = c("20min","40min","100min"))
+newSEts <- addZeroTime(newSE, condition = "treatment", treat = "EGF",
+                       zeroTreat = "1stCtrl",
+                       timeRange = c("10min", "20min","40min","100min"))
 
-newSEts <- newSE[ , newSE$treatment == "EGF"]
+#newSEts <- newSE[ , newSE$treatment == "EGF"]
 assayMat <- SummarizedExperiment::assay(newSEts)
 
 exprMat <- lapply(unique(newSEts$timepoint), function(tp) {
@@ -398,7 +400,7 @@ clustEnr <- clusterEnrich(clusterTab = tsc$cluster, se = newSE,
                           inputSet = inGMT2, filterP = 0.01, ifFDR = FALSE)
 ```
 
-```{r}
+```{r, include=FALSE}
 clusterEnrichExp <- function(clusterTab, se, inputSet, reference = NULL,
                           ptm = FALSE, adj = "BH", filterP = 0.05,
                           ifFDR = FALSE) {
@@ -470,7 +472,7 @@ clustEnrX <- clusterEnrichExp(clusterTab = tsc$cluster, se = newSE,
 ```
 
 
-```{r, include=FALSE, eval=FALSE}
+```{r}
 clustEnr$plot + theme_light() + theme(axis.text = element_text(color = "#000000"))
 ```
 
@@ -479,7 +481,7 @@ clustEnrX$plot + theme_classic()
 ```
 ```{r}
 # download the list
-df <- as.data.frame(clustEnr$table)
+df <- as.data.frame(clustEnrX$table)
 df2 <- apply(df,2,as.character)
 write.csv(df2, "ClusterEnrichmentListEGF.csv")
 ```
@@ -515,7 +517,7 @@ plotKinaseTimeSeries(scoreTab, pCut = 0.05, clusterName = "cluster1")
 ```{r phophosites, include=FALSE, eval=FALSE}
 newSEts <- addZeroTime(newSE, condition = "treatment", treat = "EGF",
                        zeroTreat = "1stCtrl",
-                       timeRange = c("20min","40min","100min"))
+                       timeRange = c("10min", "20min","40min","100min"))
 
 rd <- as.data.frame(rowData(newSEts))
 timerange <- unique(newSEts$timepoint)
@@ -550,7 +552,7 @@ for (i in sites) {
 ```{r phosphosites, fig.path = "./figureCommandLineEGF/phosphosites/"}
 newSEts <- addZeroTime(newSE, condition = "treatment", treat = "EGF",
                        zeroTreat = "1stCtrl",
-                       timeRange = c("20min","40min","100min"))
+                       timeRange = c("10min", "20min","40min","100min"))
 
 rd <- as.data.frame(rowData(newSEts))
 timerange <- unique(newSEts$timepoint)
