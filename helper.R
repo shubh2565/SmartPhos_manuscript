@@ -474,6 +474,71 @@ plotVolcanoDEA <- function(resDE, pFilter = 0.05, fcFilter = 0.5,
 }
 
 
+############################# enrichment function ##############################
+
+clusterEnrichExp <- function(clusterTab, se, inputSet, reference = NULL,
+                             ptm = FALSE, adj = "BH", filterP = 0.05,
+                             ifFDR = FALSE) {
+  
+  cluster <- padj <- ifSig <- pval <- Name <- atLeast1 <- NULL
+  # If reference is not provided, derive it from the SummarizedExperiment object
+  if (is.null(reference)) {
+    if (ptm) {
+      reference <- rowData(se)$site
+    }
+    else {
+      reference <- unique(rowData(se)$Gene)
+    }
+  }
+  
+  # Perform Fisher's Exact Test for each unique cluster
+  resTabFisher <- lapply(unique(clusterTab$cluster), function(cc) {
+    # Extract gene IDs for the current cluster
+    id <- filter(clusterTab, cluster == cc)$feature
+    if (ptm) {
+      genes <- unique(elementMetadata(se)[id,]$site)
+    }
+    else {
+      genes <- unique(elementMetadata(se)[id,]$Gene)
+    }
+    
+    # Run Fisher's Exact Test and annotate results with the cluster ID
+    eachOut <- runFisher(genes, reference, inputSet, ptm) %>%
+      mutate(cluster = cc)
+  }) %>% bind_rows()
+  
+  # Filter results based on significance and prepare for plotting
+  if (ifFDR) {
+    plotTab <- resTabFisher %>%
+      filter(padj <= filterP) %>% arrange(padj) %>%
+      mutate(ifSig = padj <= filterP) %>%
+      group_by(Name) %>% mutate(atLeast1 = sum(ifSig)>0) %>%
+      filter(atLeast1) %>% ungroup()
+  }
+  else {
+    plotTab <- resTabFisher %>%
+      filter(pval <= filterP) %>% arrange(pval) %>%
+      mutate(ifSig = pval <= filterP) %>%
+      group_by(Name) %>% mutate(atLeast1 = sum(ifSig)>0) %>%
+      filter(atLeast1) %>% ungroup()
+  }
+  
+  #print(plotTab)
+  
+  # Create a ggplot object for visualization of enrichment results
+  p <- ggplot(plotTab,
+              aes(x=cluster, y=Name, customdata = cluster, key = Name)) +
+    geom_point(aes(size = Gene.number,fill=-log10(pval)), shape = 21,
+               color = "black") +
+    scale_fill_gradient(low = "white", high = "red") +
+    xlab("Cluster") +
+    ylab("Pathway") +
+    labs(size="Number of Genes") +
+    theme(axis.text.x = element_text(size = 12),
+          axis.text.y = element_text(size = 12),
+          plot.title = element_text(hjust = 0.5, face = "bold"))
+  return(list(table = plotTab, plot = p))
+}
 
 
 
