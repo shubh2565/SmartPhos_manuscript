@@ -1,7 +1,7 @@
 ---
 title: "SmartPhos command line"
 author: "Shubham Agrawal"
-date: "2026-02-10"
+date: "2026-02-11"
 output:
   BiocStyle::html_document:
     toc_float: true
@@ -285,7 +285,7 @@ intensityBoxPlot(se = dea$seSub, id = 's4971', symbol = "EGFR_S991")
 set.seed(12345)
 
 newSEts <- addZeroTime(newSE, condition = "treatment", treat = "HGF",
-                       zeroTreat = "1stCtrl",
+                       zeroTreat = "2ndCtrl",
                        timeRange = c("10min", "20min","40min","100min"))
 assayMat <- SummarizedExperiment::assay(newSEts)
 
@@ -420,7 +420,7 @@ for (i in sites) {
 
 ```{r phosphosites, fig.path = "./figureCommandLineHGF/phosphosites/"}
 newSEts <- addZeroTime(newSE, condition = "treatment", treat = "HGF",
-                       zeroTreat = "1stCtrl",
+                       zeroTreat = "2ndCtrl",
                        timeRange = c("10min", "20min","40min","100min"))
 
 rd <- as.data.frame(rowData(newSEts))
