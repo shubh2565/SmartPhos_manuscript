@@ -150,6 +150,7 @@ p$layers[[1]]$aes_params$stroke <- 1.2
 
 p + coord_equal() + theme(aspect.ratio = 1, legend.position = "right",
                           axis.text = element_text(color = "#000000")) +
+  geom_text_repel(aes(label = timepoint), max.overlaps = Inf, size = 2.75) +
   guides(
     shape = guide_legend(order = 1),
     color = guide_legend(order = 2)
@@ -288,7 +289,9 @@ intensityBoxPlot(se = dea$seSub, id = 's4971', symbol = "EGFR_S991")
 ```{r}
 set.seed(12345)
 
-newSEts <- newSE[ , newSE$treatment == "H.E"]
+newSEts <- addZeroTime(newSE, condition = "treatment", treat = "H.E",
+                       zeroTreat = "1stCtrl",
+                       timeRange = c("10min", "20min","40min","100min"))
 assayMat <- SummarizedExperiment::assay(newSEts)
 
 exprMat <- lapply(unique(newSEts$timepoint), function(tp) {
@@ -346,10 +349,18 @@ clustEnr <- clusterEnrich(clusterTab = tsc$cluster, se = newSE,
 clustEnr$plot + theme_light() + theme(axis.text = element_text(color = "#000000"))
 ```
 
-```{r cluster_enrichment}
+```{r, include=FALSE, eval=FALSE}
 clustEnr$plot + theme_classic()
 ```
 
+```{r}
+clustEnrX <- clusterEnrichExp(clusterTab = tsc$cluster, se = newSE, 
+                          inputSet = inGMT2, filterP = 0.01, ifFDR = FALSE)
+```
+
+```{r cluster_enrichment}
+clustEnrX$plot + theme_classic()
+```
 
 # Kinase activity inference
 
@@ -378,7 +389,7 @@ plotKinaseTimeSeries(scoreTab, pCut = 0.05, clusterName = "cluster1")
 
 # Phosphosites pattern
 
-```{r phophosites}
+```{r phophosites, include=FALSE, eval=FALSE}
 newSEts <- addZeroTime(newSE, condition = "treatment", treat = "H.E", 
                        zeroTreat = "1stCtrl", 
                        timeRange = c("20min","40min","100min"))
@@ -413,3 +424,40 @@ for (i in sites) {
 }
 ```
 
+```{r phosphosites, fig.path = "./figureCommandLineHE/phosphosites/"}
+newSEts <- addZeroTime(newSE, condition = "treatment", treat = "H.E",
+                       zeroTreat = "1stCtrl",
+                       timeRange = c("10min", "20min","40min","100min"))
+
+rd <- as.data.frame(rowData(newSEts))
+timerange <- unique(newSEts$timepoint)
+geneList <-  c("MET", "Shc1", "AKT1", "AKT2", "AKT3", "RPS6KA1", "RPS6KA3", "RPS6KA4", "RPS6KB1", "EGFR", "SOS1", "MAP2K2", "MAPK3", "MAPK1", "ERBB2","GAB1","RPS6", "RAF1", "RPS6", "TGFBR2", "AXL", "MTOR")
+
+for (i in geneList) {
+  # condition to check if that site is present in row data
+  if (i %in% rd$Gene) {
+    sites <- rd[rd$Gene==i,]$site
+    for (j in sites) {
+      # condition to check if assay doesn't have NAs (imputed assays are not allowed)
+      if (!is.na(assay(newSEts)[rownames(rd[rd$site==j,]), ][1])) {
+        p <- plotTimeSeries(newSEts, type = "expression", 
+                          geneID = rownames(rd[rd$site==j,]), 
+                          symbol = j, condition = "treatment", 
+                          treatment = "H.E", timerange = timerange) +
+          theme(axis.text = element_text(color = "#000000", size = 20), 
+                axis.text.x = element_text(angle = 0, vjust = 0, hjust = 0.5, size = 20),
+                axis.title = element_text(size=20),
+                plot.title = element_text(size=30)) + 
+          scale_x_continuous(breaks = c(0,20,40,60,80,100))
+        p$layers[[1]]$aes_params$size <- 6
+        p$layers[[1]]$mapping$colour <- NULL
+        p$layers[[1]]$aes_params$colour <- "#c1191f"
+        p$layers[[2]]$aes_params$linewidth <- 1
+        p$layers[[2]]$mapping$colour <- NULL
+        p$layers[[2]]$aes_params$colour <- "#555555"
+        print(p)
+      }
+    }
+  }
+}
+```
