@@ -1,7 +1,7 @@
 ---
 title: "SmartPhos command line"
 author: "Shubham Agrawal"
-date: "2026-02-10"
+date: "2026-02-18"
 output:
   BiocStyle::html_document:
     toc_float: true
@@ -35,7 +35,7 @@ mae <- readExperimentDIA(fileTable = filetable,
 # Use the created object
 
 ```{r}
-mae <- readRDS("data/maeObjNEW.Rds")
+mae <- readRDS("data/mae20260218.Rds")
 mae
 ```
 # Preprocessing the assay, basic visualization, PCA
@@ -210,7 +210,7 @@ dea <- performDifferentialExp(se = newSE,
                               assay = "imputed", 
                               method = "limma", 
                               condition = "treatment", 
-                              reference = "1stCtrl", 
+                              reference = "Ctrl", 
                               target = "EGF")
 ```
 
@@ -232,7 +232,7 @@ deaPhoto <- performDifferentialExp(se = sePhoto,
                               assay = "imputed", 
                               method = "limma", 
                               condition = "treatment", 
-                              reference = "1stCtrl", 
+                              reference = "Ctrl", 
                               target = "EGF")
 
 plotVolcanoPhoto <- function(resDE, pFilter = 0.05, fcFilter = 0.5, 
@@ -306,7 +306,7 @@ dea$resDE
 
 
 
-```{r intensityBoxPlot_specificPhophosite}
+```{r intensityBoxPlot_specificPhophosite, include=FALSE, eval=FALSE}
 intensityBoxPlot(se = dea$seSub, id = 's4971', symbol = "EGFR_S991")
 ```
 
@@ -317,7 +317,7 @@ set.seed(12345)
 library(matrixStats)
 
 newSEts <- addZeroTime(newSE, condition = "treatment", treat = "EGF",
-                       zeroTreat = "1stCtrl",
+                       zeroTreat = "Ctrl",
                        timeRange = c("10min", "20min","40min","100min"))
 
 #newSEts <- newSE[ , newSE$treatment == "EGF"]
@@ -450,7 +450,7 @@ plotKinaseTimeSeries(scoreTab, pCut = 0.05, clusterName = "cluster1")
 
 ```{r phophosites, include=FALSE, eval=FALSE}
 newSEts <- addZeroTime(newSE, condition = "treatment", treat = "EGF",
-                       zeroTreat = "1stCtrl",
+                       zeroTreat = "Ctrl",
                        timeRange = c("10min", "20min","40min","100min"))
 
 rd <- as.data.frame(rowData(newSEts))
@@ -485,7 +485,7 @@ for (i in sites) {
 
 ```{r phosphosites, fig.path = "./figureCommandLineEGF/phosphosites/"}
 newSEts <- addZeroTime(newSE, condition = "treatment", treat = "EGF",
-                       zeroTreat = "1stCtrl",
+                       zeroTreat = "Ctrl",
                        timeRange = c("10min", "20min","40min","100min"))
 
 rd <- as.data.frame(rowData(newSEts))
