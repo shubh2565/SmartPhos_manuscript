@@ -1,7 +1,7 @@
 ---
 title: "SmartPhos command line"
 author: "Shubham Agrawal"
-date: "2026-02-11"
+date: "2026-02-19"
 output:
   BiocStyle::html_document:
     toc_float: true
@@ -36,7 +36,7 @@ mae <- readExperimentDIA(fileTable = filetable,
 # Use the created object
 
 ```{r}
-mae <- readRDS("data/maeObjNEW.Rds")
+mae <- readRDS("data/mae20260218.Rds")
 mae
 ```
 # Preprocessing the assay, basic visualization, PCA
@@ -181,7 +181,7 @@ dea <- performDifferentialExp(se = newSE,
                               assay = "imputed", 
                               method = "limma", 
                               condition = "treatment", 
-                              reference = "2ndCtrl", 
+                              reference = "Ctrl", 
                               target = "HGF")
 ```
 
@@ -275,7 +275,7 @@ dea$resDE
 
 
 
-```{r intensityBoxPlot_specificPhophosite}
+```{r intensityBoxPlot_specificPhophosite, include=FALSE, eval=FALSE}
 intensityBoxPlot(se = dea$seSub, id = 's4971', symbol = "EGFR_S991")
 ```
 
@@ -285,7 +285,7 @@ intensityBoxPlot(se = dea$seSub, id = 's4971', symbol = "EGFR_S991")
 set.seed(12345)
 
 newSEts <- addZeroTime(newSE, condition = "treatment", treat = "HGF",
-                       zeroTreat = "2ndCtrl",
+                       zeroTreat = "Ctrl",
                        timeRange = c("10min", "20min","40min","100min"))
 assayMat <- SummarizedExperiment::assay(newSEts)
 
@@ -386,7 +386,7 @@ plotKinaseTimeSeries(scoreTab, pCut = 0.05, clusterName = "cluster1")
 
 ```{r phophosites, include=FALSE, eval=FALSE}
 newSEts <- addZeroTime(newSE, condition = "treatment", treat = "HGF", 
-                       zeroTreat = "2ndCtrl", 
+                       zeroTreat = "Ctrl", 
                        timeRange = c("20min","40min","100min"))
 rd <- as.data.frame(rowData(newSEts))
 timerange <- unique(newSEts$timepoint)
@@ -420,7 +420,7 @@ for (i in sites) {
 
 ```{r phosphosites, fig.path = "./figureCommandLineHGF/phosphosites/"}
 newSEts <- addZeroTime(newSE, condition = "treatment", treat = "HGF",
-                       zeroTreat = "2ndCtrl",
+                       zeroTreat = "Ctrl",
                        timeRange = c("10min", "20min","40min","100min"))
 
 rd <- as.data.frame(rowData(newSEts))
