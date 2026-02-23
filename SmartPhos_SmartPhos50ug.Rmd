@@ -35,12 +35,12 @@ mae
 # Load the created mae object and get phosphoproteome assay
 
 ```{r}
-maeAll <- readRDS("data/maeTitrationCurve.Rds")
-maeAll
+mae <- readRDS("data/maeTitrationCurve.Rds")
+mae
 ```
 
 ```{r}
-mae <- maeAll[, maeAll$tlevel == "T2"]
+mae <- mae[, mae$tlevel == "T2"]
 mae
 ```
 
@@ -154,7 +154,7 @@ plotVolcanoDEA(deaT$resDE, fcFilter = 1, pFilter = 0.1, usePadj = TRUE) +
   ggtitle("Volcano plot (SmartPhos)")
 ```
 
-```{r intensityBoxPlot}
+```{r intensityBoxPlot, include=FALSE, eval=FALSE}
 p1 <- intensityBoxPlot(se = deaT$seSub, id = 's11574', symbol = "PTPN11_Y580")
 p2 <- intensityBoxPlot(se = deaT$seSub, id = 's13315', symbol = "GAB1_Y659")
 p3 <- intensityBoxPlot(se = deaT$seSub, id = 's5007', symbol = "MET_Y1003")

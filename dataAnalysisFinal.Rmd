@@ -1,7 +1,7 @@
 ---
 title: "Data Analysis Final"
 author: "Shubham Agrawal"
-date: "2026-02-02"
+date: "2026-02-23"
 output:
   BiocStyle::html_document:
     toc_float: true
@@ -19,21 +19,21 @@ source(file = "helper.R")
 
 Load the MultiAssayExperiment object of the InSolutionDigest experiment:
 
-```{r, message=FALSE}
-maeInSolution <- readRDS("data/maeInSolutionDigest.Rds")
+```{r, message=FALSE, eval=FALSE, include=FALSE}
+maeInSolution <- readRDS("data/maeInSolDigest_20260219.Rds")
 maeInSolution
 ```
 
 Load the MultiAssayExperiment object of the TitrationCurve experiment:
 
-```{r, message=FALSE}
-maeTitrationAll <- readRDS("data/maeTitrationCurve.Rds")
-maeTitrationAll 
+```{r, message=FALSE, eval=FALSE, include=FALSE}
+maeTitration <- readRDS("data/maeSmartPhos_20260219.Rds")
+maeTitration
 ```
 
 Get only the T2 samples
 
-```{r}
+```{r, eval=FALSE, include=FALSE}
 maeTitration <- maeTitrationAll[, maeTitrationAll$tlevel == "T2"]
 maeTitration
 ```
@@ -42,16 +42,34 @@ maeTitration
 
 Extract the phosphoproteome experiments from both the objects.
 
-```{r, message=FALSE}
+```{r, message=FALSE, eval=FALSE, include=FALSE}
 seInSolution <- maeInSolution[["Phosphoproteome"]]
 colData(seInSolution) <- colData(maeInSolution)
 seInSolution
 ```
-```{r, message=FALSE}
+```{r, message=FALSE, eval=FALSE, include=FALSE}
 seTitration <- maeTitration[["Phosphoproteome"]]
 colData(seTitration) <- colData(maeTitration)
 seTitration
 ```
+
+# Load the combined mae object
+
+```{r}
+mae <- readRDS("data/maeCombined_20260223.Rds")
+maeSmartPhos <- mae[, mae$experiment == "SmartPhos"]
+maeInSol <- mae[, mae$experiment == "InSolution"]
+
+seTitration <- maeSmartPhos[["Phosphoproteome"]]
+colData(seTitration) <- colData(maeSmartPhos)
+
+seInSolution <- maeInSol[["Phosphoproteome"]]
+colData(seInSolution) <- colData(maeInSol)
+```
+
+
+
+
 # Plot the total phosphosites detected
 
 ```{r}
