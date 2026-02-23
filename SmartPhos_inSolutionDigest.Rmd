@@ -1,7 +1,7 @@
 ---
 title: "SmartPhos InSolution Digest"
 author: "Shubham Agrawal"
-date: "2026-02-03"
+date: "2026-02-23"
 output:
   BiocStyle::html_document:
     toc_float: true
@@ -35,12 +35,13 @@ mae
 # Load created mae object and get phosphoproteome assay
 
 ```{r}
-mae <- readRDS("data/maeInSolutionDigest.Rds")
-mae
+mae <- readRDS("data/maeCombined_20260223.Rds")
+maeInSol <- mae[, mae$experiment == "InSolution"]
+maeInSol
 ```
 ```{r}
-se <- mae[["Phosphoproteome"]]
-colData(se) <- colData(mae)
+se <- maeInSol[["Phosphoproteome"]]
+colData(se) <- colData(maeInSol)
 se
 ```
 
@@ -106,7 +107,7 @@ plotVolcanoDEA(dea$resDE, fcFilter = 1, pFilter = 0.1, usePadj = TRUE) +
   ggtitle("Volcano plot (InSolution Digest)")
 ```
 
-```{r intensityBoxPlot}
+```{r intensityBoxPlot,  include=FALSE, eval=FALSE}
 p1 <- intensityBoxPlot(se = dea$seSub, id = 's11574', symbol = "PTPN11_Y580")
 p2 <- intensityBoxPlot(se = dea$seSub, id = 's13315', symbol = "GAB1_Y659")
 p3 <- intensityBoxPlot(se = dea$seSub, id = 's5007', symbol = "MET_Y1003")

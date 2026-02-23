@@ -1,7 +1,7 @@
 ---
-title: "SmartPhos: Titration Curve"
+title: "SmartPhos: SmartPhos Protocol"
 author: "Shubham Agrawal"
-date: "2026-02-03"
+date: "2026-02-23"
 output:
   BiocStyle::html_document:
     toc_float: true
@@ -36,18 +36,20 @@ mae
 
 ```{r}
 mae <- readRDS("data/maeTitrationCurve.Rds")
-mae
-```
-
-```{r}
 mae <- mae[, mae$tlevel == "T2"]
 mae
 ```
 
+```{r}
+mae <- readRDS("data/maeCombined_20260223.Rds")
+maeSmartPhos <- mae[, mae$experiment == "SmartPhos"]
+maeSmartPhos
+```
+
 
 ```{r}
-se <- mae[["Phosphoproteome"]]
-colData(se) <- colData(mae)
+se <- maeSmartPhos[["Phosphoproteome"]]
+colData(se) <- colData(maeSmartPhos)
 se
 ```
 
@@ -270,7 +272,7 @@ p
 # Compare DEA results
 
 ```{r log2FC_comparison}
-maeInSol <- readRDS("data/maeInSolutionDigest.Rds")
+maeInSol <- mae[, mae$experiment == "InSolution"]
 seInSol <- maeInSol[["Phosphoproteome"]]
 colData(seInSol) <- colData(maeInSol)
 newSEInSol <- preprocessPhos(seData = seInSol, transform = "log2", normalize = TRUE, 
