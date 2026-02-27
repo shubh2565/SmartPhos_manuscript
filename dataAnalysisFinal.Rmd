@@ -187,6 +187,8 @@ g <- ggplot(plotTabComb, aes(x = replicate, y = total)) +
   geom_bar(stat = "identity" , aes(fill = experiment)) +
   ggtitle("Comparison of Protocols for 50ug samples") +
   ylab("Total number of detected phosphorylation sites") + xlab("Replicate") +
+  scale_fill_manual(values = c("InSolutionDigest" = "#a3a7b2", 
+                               "SmartPhos" = "#90bfce")) +
   theme_classic() +
   theme(legend.position = "none", 
     plot.title = element_text(hjust = 0.5, face = "bold")
@@ -194,6 +196,7 @@ g <- ggplot(plotTabComb, aes(x = replicate, y = total)) +
   facet_grid(~ experiment, scales="free") 
   
 g
+
 ```
 
 
@@ -216,8 +219,10 @@ rd2 <- rowData(seTfilt)$site
 venn_list <- list(InSolutionDigest = rd1, SmartPhos = rd2)
 
 ggvenn(venn_list,
-       fill_color = c("tomato", "skyblue"),
-       stroke_size = 0.5, set_name_size = 5, text_size = 5)
+       fill_color = c("#a3a7b2", "#90bfce"),
+       stroke_size = 0.7, set_name_size = 5, text_size = 5, auto_scale = TRUE)
+
+
 ```
 
 ```{r, eval=FALSE, include=FALSE}
@@ -288,10 +293,9 @@ results <- results %>%
                            ordered = TRUE)) %>%
   arrange(experiment) 
 
-ggplot(results, aes(x = missing_rate, y = n_sites, color = experiment, 
-                    shape = experiment)) +
+ggplot(results, aes(x = missing_rate, y = n_sites, color = experiment)) +
   geom_line(linewidth = 1.1) +
-  geom_point(size = 2.5) +
+  geom_point(size = 2.5, shape = 16) +
   scale_color_brewer(palette = "Set2") +
   labs(
     x = "Allowed Missing Rate",
@@ -305,16 +309,19 @@ expInSolution50 <- calc_missing_curve(assay(seInSolution50), "InSolutionDigest")
 expTitration50 <- calc_missing_curve(assay(seTitration50), "SmartPhos")
 results <- bind_rows(expInSolution50, expTitration50)
 
-ggplot(results, aes(x = missing_rate, y = n_sites, color = experiment, 
-                    shape = experiment)) +
+ggplot(results, aes(x = missing_rate, y = n_sites, color = experiment)) +
   geom_line(linewidth = 1.1) +
-  geom_point(size = 2.5) +
+  geom_point(size = 2.5, shape = 16) +
+  scale_color_manual(values = c("InSolutionDigest" = "#a3a7b2", 
+                               "SmartPhos" = "#90bfce")) +
   labs(
     x = "Allowed Missing Rate",
     y = "Number of Phosphosites Detected",
     title = "Effect of Missing Rate Threshold on Phosphosite Retention for 50ug samples"
   ) +
-  theme_classic(base_size = 14)
+  ylim(7500, 20000) +
+  theme_classic(base_size = 14) 
+  
 ```
 
 # Checking for specific phosphosites detected
@@ -400,6 +407,7 @@ bp <- plotBoxTable %>%
   stat_summary(fun = mean, geom = "crossbar", width = 0.5, size = 0.4, color = "black") +
   geom_point(aes(color = experiment), alpha = 0.7, size = 4.0, position = position_identity()) +
   scale_color_brewer(palette = "Set2") +
+  ylim(5, 30) +
   theme_classic() +
   theme(legend.position = "none") +
   xlab("Experiment") + ylab("Phosphosites detected") +
@@ -431,6 +439,9 @@ bp <- plotBoxTable %>%
   ggplot(aes(x=as.factor(experiment), y=count)) + 
   stat_summary(fun = mean, geom = "crossbar", width = 0.5, size = 0.4, color = "black") +
   geom_point(aes(color = experiment), alpha = 0.7, size = 4.0, position = position_identity()) +
+  scale_color_manual(values = c("InSolutionDigest" = "#a3a7b2", 
+                               "SmartPhos" = "#90bfce")) +
+  ylim(0,30) +
   theme_classic() +
   theme(legend.position = "none") +
   xlab("Experiment") + ylab("Phosphosites detected") +
@@ -473,6 +484,8 @@ consistent (less spread) as compared to the samples with quantity 5ug, 15ug and
 ```{r pca}
 pcaTitratHGF <- stats::prcomp(t(assays(seTitratProcessHGF)[["imputed"]]), 
                               center = TRUE, scale. = TRUE)
+colData(seTitratProcessHGF)$quantity <- fct_relevel(colData(seTitratProcessHGF)$quantity, "5ug", "15ug", "50ug", "200ug", "750ug")
+
 plotPCAnalysis(pca = pcaTitratHGF, se = seTitratProcessHGF, color = "quantity", 
                title = "Principal Components (SmartPhos)") + coord_equal() + scale_color_brewer(palette = "Set2") 
 ```
