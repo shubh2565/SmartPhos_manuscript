@@ -265,7 +265,12 @@ datatable(scoreTabT, options = list(pageLength = 10)) %>%
 ```
 
 ```{r kinaseActivity}
-p <- plotKinaseDE(scoreTabT, nTop = 10, pCut = 0.05) + ylim(-2, 8)
+p <- plotKinaseDE(scoreTabT, nTop = 10, pCut = 0.05) + ylim(-2, 8) + 
+  theme(
+    legend.position = c(0.98, 0.05),
+    legend.justification = c(1, 0),
+    panel.grid = element_blank()
+  )
 p
 ```
 
@@ -322,8 +327,8 @@ sig2 <- resDE2[resDE2$padj < 0.1 & abs(resDE2$log2FC) >= 1, ]$site
 venn_list <- list(InSolutionDigest = sig2, SmartPhos = sig1)
 
 ggvenn(venn_list,
-       fill_color = c("tomato", "skyblue"),
-       stroke_size = 0.5, set_name_size = 5, text_size = 5)
+       fill_color = c("#a3a7b2", "#90bfce"),
+       stroke_size = 0.7, set_name_size = 5, text_size = 5, auto_scale = TRUE)
 ```
 
 

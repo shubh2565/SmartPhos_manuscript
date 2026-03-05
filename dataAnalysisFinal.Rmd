@@ -1,7 +1,7 @@
 ---
 title: "Data Analysis Final"
 author: "Shubham Agrawal"
-date: "2026-02-23"
+date: "2026-03-04"
 output:
   BiocStyle::html_document:
     toc_float: true
@@ -302,6 +302,7 @@ ggplot(results, aes(x = missing_rate, y = n_sites, color = experiment)) +
     y = "Number of Phosphosites Detected",
     title = "Effect of Missing Rate Threshold on Phosphosite Retention (SmartPhos)"
   ) +
+  ylim(0, 20000) +
   theme_classic(base_size = 14)
 ```
 ```{r missingRate_comparison}
@@ -319,7 +320,7 @@ ggplot(results, aes(x = missing_rate, y = n_sites, color = experiment)) +
     y = "Number of Phosphosites Detected",
     title = "Effect of Missing Rate Threshold on Phosphosite Retention for 50ug samples"
   ) +
-  ylim(7500, 20000) +
+  ylim(0, 20000) +
   theme_classic(base_size = 14) 
   
 ```
@@ -407,7 +408,7 @@ bp <- plotBoxTable %>%
   stat_summary(fun = mean, geom = "crossbar", width = 0.5, size = 0.4, color = "black") +
   geom_point(aes(color = experiment), alpha = 0.7, size = 4.0, position = position_identity()) +
   scale_color_brewer(palette = "Set2") +
-  ylim(5, 30) +
+  ylim(0, 30) +
   theme_classic() +
   theme(legend.position = "none") +
   xlab("Experiment") + ylab("Phosphosites detected") +
@@ -487,7 +488,7 @@ pcaTitratHGF <- stats::prcomp(t(assays(seTitratProcessHGF)[["imputed"]]),
 colData(seTitratProcessHGF)$quantity <- fct_relevel(colData(seTitratProcessHGF)$quantity, "5ug", "15ug", "50ug", "200ug", "750ug")
 
 plotPCAnalysis(pca = pcaTitratHGF, se = seTitratProcessHGF, color = "quantity", 
-               title = "Principal Components (SmartPhos)") + coord_equal() + scale_color_brewer(palette = "Set2") 
+               title = "Principal Components (SmartPhos)") + coord_equal() + scale_color_brewer(palette = "Set2") + theme(panel.grid = element_blank(), axis.text  = element_text(color = "black"))
 ```
 
 # Get list of phosphosites
