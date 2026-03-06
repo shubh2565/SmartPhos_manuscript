@@ -293,7 +293,7 @@ results <- results %>%
                            ordered = TRUE)) %>%
   arrange(experiment) 
 
-ggplot(results, aes(x = missing_rate, y = n_sites, color = experiment)) +
+fig2_panelC <- ggplot(results, aes(x = missing_rate, y = n_sites, color = experiment)) +
   geom_line(linewidth = 1.1) +
   geom_point(size = 2.5, shape = 16) +
   scale_color_brewer(palette = "Set2") +
@@ -303,14 +303,36 @@ ggplot(results, aes(x = missing_rate, y = n_sites, color = experiment)) +
     title = "Effect of Missing Rate Threshold on Phosphosite Retention (SmartPhos)"
   ) +
   ylim(0, 20000) +
-  theme_classic(base_size = 14)
+  theme_classic(base_size = 14) +
+  theme(legend.position = "top")
+
+fig2_panelC <- fig2_panelC+
+  theme_classic()+
+  #scale_color_manual(values = tc_palette)+
+  ylab("Phosphorylation Sites")+
+  labs(title = NULL,
+       color = "Protein ug")+
+  theme(axis.text.y=element_text(size=6),
+            axis.text.x=element_text(size=6),
+            axis.title=element_text(size=7,face="bold"))+
+  theme(legend.title = element_text(size = 5, face = "bold"),
+            legend.text = element_text(size = 5),
+            legend.key.size = unit(0.1, 'in'),
+            legend.position = "top")
+
+ggsave(filename = "figureDataAnalysisFinal/Fig2_PanelC.pdf",
+       plot = fig2_panelC,
+       width = 2.9,
+       height = 2.9)
 ```
+
+
 ```{r missingRate_comparison}
 expInSolution50 <- calc_missing_curve(assay(seInSolution50), "InSolutionDigest")
 expTitration50 <- calc_missing_curve(assay(seTitration50), "SmartPhos")
 results <- bind_rows(expInSolution50, expTitration50)
 
-ggplot(results, aes(x = missing_rate, y = n_sites, color = experiment)) +
+fig3_panelC <- ggplot(results, aes(x = missing_rate, y = n_sites, color = experiment)) +
   geom_line(linewidth = 1.1) +
   geom_point(size = 2.5, shape = 16) +
   scale_color_manual(values = c("InSolutionDigest" = "#a3a7b2", 
@@ -322,6 +344,25 @@ ggplot(results, aes(x = missing_rate, y = n_sites, color = experiment)) +
   ) +
   ylim(0, 20000) +
   theme_classic(base_size = 14) 
+
+fig3_panelC <- fig3_panelC+
+  theme_classic()+
+  #scale_color_manual(values = comparison_palette)+
+  ylab("Phosphorylation Sites")+
+  labs(title = NULL,
+       color = "Experiment")+
+  theme(axis.text.y=element_text(size=6),
+            axis.text.x=element_text(size=6),
+            axis.title=element_text(size=7,face="bold"))+
+  theme(legend.title = element_text(size = 5, face = "bold"),
+            legend.text = element_text(size = 5),
+            legend.key.size = unit(0.1, 'in'),
+            legend.position = "top")
+
+ggsave(filename = "figureDataAnalysisFinal/Fig3_PanelC.pdf",
+       plot = fig3_panelC,
+       width = 2.9,
+       height = 2.9)
   
 ```
 
@@ -402,7 +443,7 @@ bp
 ```
 
 ```{r phosphosites_detected_perExperiment}
-bp <- plotBoxTable %>%
+fig2_panelD <- plotBoxTable %>%
   mutate(experiment = fct_relevel(experiment, "5ug", "15ug", "50ug", "200ug", "750ug")) %>%
   ggplot(aes(x=as.factor(experiment), y=count)) + 
   stat_summary(fun = mean, geom = "crossbar", width = 0.5, size = 0.4, color = "black") +
@@ -413,7 +454,25 @@ bp <- plotBoxTable %>%
   theme(legend.position = "none") +
   xlab("Experiment") + ylab("Phosphosites detected") +
   ggtitle("Number of phosphosites detected per experiment")
-bp
+
+fig2_panelD <- fig2_panelD+
+  theme_classic()+
+  ylab("Receptor Phosphorylation Sites")+
+  xlab("Protein ug")+
+  labs(title = NULL,
+       color = "Protein ug")+
+  theme(axis.text.y=element_text(size=6),
+            axis.text.x=element_text(size=6),
+            axis.title=element_text(size=7,face="bold"))+
+  theme(legend.title = element_text(size = 5, face = "bold"),
+            legend.text = element_text(size = 5),
+            legend.key.size = unit(0.1, 'in'),
+            legend.position = "none")
+
+ggsave(filename = "figureDataAnalysisFinal/Fig2_PanelD.pdf",
+       plot = fig2_panelD,
+       width = 2.9,
+       height = 2.9)
 ```
 ```{r, include=FALSE, eval=FALSE}
 bp <- plotBoxTable %>%
@@ -435,7 +494,7 @@ plotBoxInSol50 <- countSites(se = seInSolution50Filter, experimentName = "InSolu
 plotBoxTitrat50 <- countSites(se = seTitration50Filter, experimentName = "SmartPhos")
 plotBoxTable <- bind_rows(plotBoxInSol50, plotBoxTitrat50)
 
-bp <- plotBoxTable %>%
+fig3_panelD <- plotBoxTable %>%
   mutate(experiment = fct_relevel(experiment, "InSolutionDigest 50ug", "SmartPhos 50ug")) %>%
   ggplot(aes(x=as.factor(experiment), y=count)) + 
   stat_summary(fun = mean, geom = "crossbar", width = 0.5, size = 0.4, color = "black") +
@@ -447,7 +506,26 @@ bp <- plotBoxTable %>%
   theme(legend.position = "none") +
   xlab("Experiment") + ylab("Phosphosites detected") +
   ggtitle("Total number of phosphosites detected per experiment")
-bp
+
+
+fig3_panelD <- fig3_panelD+
+  theme_classic()+
+  ylab("Receptor Phosphorylation Sites")+
+  xlab("Experiment")+
+  labs(title = NULL,
+       color = "Experiment")+
+  theme(axis.text.y=element_text(size=6),
+            axis.text.x=element_text(size=6),
+            axis.title=element_text(size=7,face="bold"))+
+  theme(legend.title = element_text(size = 5, face = "bold"),
+            legend.text = element_text(size = 5),
+            legend.key.size = unit(0.1, 'in'),
+            legend.position = "none")
+
+ggsave(filename = "figureDataAnalysisFinal/Fig3_PanelD.pdf",
+       plot = fig3_panelD,
+       width = 2.9,
+       height = 2.9)
 ```
 
 # Process the Phosphoproteome assay
@@ -487,8 +565,28 @@ pcaTitratHGF <- stats::prcomp(t(assays(seTitratProcessHGF)[["imputed"]]),
                               center = TRUE, scale. = TRUE)
 colData(seTitratProcessHGF)$quantity <- fct_relevel(colData(seTitratProcessHGF)$quantity, "5ug", "15ug", "50ug", "200ug", "750ug")
 
-plotPCAnalysis(pca = pcaTitratHGF, se = seTitratProcessHGF, color = "quantity", 
-               title = "Principal Components (SmartPhos)") + coord_equal() + scale_color_brewer(palette = "Set2") + theme(panel.grid = element_blank(), axis.text  = element_text(color = "black"))
+# plotPCAnalysis(pca = pcaTitratHGF, se = seTitratProcessHGF, color = "quantity", 
+#                title = "Principal Components (SmartPhos)") + coord_equal() + scale_color_brewer(palette = "Set2") + theme(panel.grid = element_blank(), axis.text  = element_text(color = "black"))
+
+fig2_panelA <- plotPCAnalysis(pca = pcaTitratHGF, se = seTitratProcessHGF, color = "quantity", 
+               title = "Principal Components (SmartPhos)")+
+  scale_color_brewer(palette = "Set2")+
+  labs(title = NULL,
+       color = "Protein ug")+
+  theme(axis.text.y=element_text(size=6),
+        axis.text.x=element_text(size=6),
+        axis.title=element_text(size=7,face="bold"),
+        axis.text  = element_text(color = "black"))+
+  theme(legend.title = element_text(size = 5, face = "bold"),
+        legend.text = element_text(size = 5),
+        legend.key.size = unit(0.1, 'in'),
+        legend.position = "top",
+        panel.grid = element_blank())
+
+ggsave(filename = "figureDataAnalysisFinal/Fig2_PanelA.pdf",
+       plot = fig2_panelA,
+       width = 2.9,
+       height = 2.9)
 ```
 
 # Get list of phosphosites
