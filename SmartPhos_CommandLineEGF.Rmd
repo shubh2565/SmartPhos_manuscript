@@ -306,8 +306,8 @@ dea$resDE
 
 
 
-```{r intensityBoxPlot_specificPhophosite, include=FALSE, eval=FALSE}
-intensityBoxPlot(se = dea$seSub, id = 's4971', symbol = "EGFR_S991")
+```{r intensityBoxPlot_specificPhophosite}
+intensityBoxPlot(se = dea$seSub, id = 's7502', symbol = "MAPK3_T207")
 ```
 
 # Time series clustering
@@ -344,10 +344,18 @@ tsc <- clusterTS(x = exprMat, k = 5, pCut = 0.6)
 
 ```{r timeSeries}
 tsc$plot + theme(
-  axis.text.x = element_text(size = 10), axis.text = element_text(color = "#000000"), ) 
+  axis.text.x = element_text(size = 10), axis.text = element_text(color = "#000000")) 
 ```
 ```{r, include=FALSE, eval=FALSE}
 tsc$plot + theme_void() + theme(legend.position = "none", strip.text = element_text(size=0)) + scale_color_gradient(low = "black", high = "green") + geom_line( aes(col = prob), alpha=1)
+```
+
+
+```{r singleSiteTimeSeries}
+timerange <- unique(newSEts$timepoint)
+plotTimeSeries(newSEts, type = "expression", geneID = "s40", 
+               symbol = "RBM47_T519", condition = "treatment",
+               treatment = "EGF", timerange = timerange)
 ```
 
 

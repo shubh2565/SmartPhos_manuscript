@@ -536,7 +536,7 @@ clusterEnrichExp <- function(clusterTab, se, inputSet, reference = NULL,
     labs(size="Number of Genes") +
     theme(axis.text.x = element_text(size = 12),
           axis.text.y = element_text(size = 12),
-          plot.title = element_text(hjust = 0.5, face = "bold"))
+          plot.title = element_text(hjust = 0.5, face = "bold")) 
   return(list(table = plotTab, plot = p))
 }
 
