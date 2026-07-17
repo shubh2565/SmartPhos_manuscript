@@ -17,6 +17,7 @@ library(ggpubr)
 library(ggrepel)
 library(DT)
 library(grid)
+library(ggplot2)
 source("helper.R")
 ```
 
@@ -211,7 +212,9 @@ dea <- performDifferentialExp(se = newSE,
                               method = "limma", 
                               condition = "treatment", 
                               reference = "Ctrl", 
-                              target = "EGF")
+                              target = "EGF",
+                              refTime = "0min",
+                              targetTime = "10min")
 ```
 
 ```{r pValue_histogram}
@@ -286,7 +289,7 @@ plotVolcanoPhoto(deaPhoto$resDE, pFilter = 0.01, fcFilter = 1)
 
 
 
-```{r volcanoPlot_fromPackage}
+```{r volcanoPlot_fromPackage, eval=FALSE, include=FALSE}
 pFilter = 0.01
 plotVolcano(dea$resDE, pFilter = 0.01, fcFilter = 1) + theme_classic() +
   geom_hline(yintercept = -log10(as.numeric(pFilter)), color = "brown",
