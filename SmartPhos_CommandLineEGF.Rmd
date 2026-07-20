@@ -475,7 +475,6 @@ for (i in geneList) {
 ```
 # Differential expression for other timepoints
 
-
 ```{r}
 dea20 <- performDifferentialExp(se = newSE, 
                               assay = "imputed", 
