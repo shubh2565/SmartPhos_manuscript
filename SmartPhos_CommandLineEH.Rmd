@@ -184,7 +184,9 @@ dea <- performDifferentialExp(se = newSE,
                               method = "limma", 
                               condition = "treatment", 
                               reference = "Ctrl", 
-                              target = "H.E")
+                              target = "H.E",
+                              refTime = "0min",
+                              targetTime = "10min")
 ```
 
 ```{r pValue_histogram}
@@ -199,64 +201,6 @@ p
 ```{r, eval=FALSE, include=FALSE}
 plotHeatmap(type = "Differentially expressed", se = dea$seSub, data = dea$resDE, top = 50)
 ```
-```{r, eval=FALSE, include=FALSE}
-sePhoto <- newSE[1:600, ]
-deaPhoto <- performDifferentialExp(se = sePhoto, 
-                              assay = "imputed", 
-                              method = "limma", 
-                              condition = "treatment", 
-                              reference = "Ctrl", 
-                              target = "EGF")
-
-plotVolcanoPhoto <- function(resDE, pFilter = 0.05, fcFilter = 0.5, 
-                           title = "Volcano plot") {
-  # Convert the input table to a data frame and ensure the 'ID' column is of
-  # type character
-  dataVolcano <- data.frame(resDE)
-  dataVolcano$ID <- as.character(dataVolcano$ID)
-  # Categorize each gene based on the provided p-value and log2 fold-change
-  # thresholds
-  dataVolcano <- mutate(dataVolcano, expression = case_when(
-    dataVolcano$log2FC >= as.numeric(fcFilter) &
-      dataVolcano$pvalue <= as.numeric(pFilter) ~ "Up",
-    dataVolcano$log2FC <= -as.numeric(fcFilter) &
-      dataVolcano$pvalue <= as.numeric(pFilter) ~ "Down",
-    dataVolcano$pvalue > as.numeric(pFilter) |
-      (dataVolcano$log2FC < as.numeric(fcFilter) &
-         dataVolcano$log2FC > -as.numeric(fcFilter)) ~ "Not Sig"
-  ))
-  
-  # Create the volcano plot
-  v <- ggplot(dataVolcano, aes(x = log2FC, y = -log10(pvalue))) +
-    # Plot the points and color them based on their expression status
-    geom_point(aes(color = expression, fill = expression), shape = 21, size = 3) +
-    scale_color_manual(values = c("Up" = "firebrick4",
-                                  "Down" = "#00002a", "Not Sig" = "#a9a9a9")) +
-    scale_fill_manual(values = c("Up" = "red", "Down" = "#2776EA", "Not Sig" = "grey"))+
-    # Add vertical lines for fold-change thresholds
-    # geom_vline(xintercept = as.numeric(fcFilter), color = "darkgrey",
-    #            linetype = "dashed") +
-    # geom_vline(xintercept = -as.numeric(fcFilter), color = "darkgrey",
-    #            linetype = "dashed") +
-    # # Add horizontal lines for p-value thresholds
-    # geom_hline(yintercept = -log10(as.numeric(pFilter)), color = "brown",
-    #            linetype = "dashed") +
-    # annotate(x = 2.5, y = -log10(as.numeric(pFilter)) - 0.2,
-    #          label = paste("P-value = ", as.numeric(pFilter)),
-    #          geom = "text", size = 4, color = "brown") +
-    xlab("absolute log2(Quantity) difference") +
-    ggtitle(title) +
-    #theme_classic()
-    theme_void() +
-    theme(legend.position = "none")
-    #theme(plot.title = element_text(hjust = 0.5))
-  
-  return(v)
-}
-
-plotVolcanoPhoto(deaPhoto$resDE, pFilter = 0.01, fcFilter = 1)
-```
-
 
 
 ```{r volcanoPlot_fromPackage}
@@ -460,4 +404,80 @@ for (i in geneList) {
     }
   }
 }
+```
+
+# Differential expression for other timepoints
+
+```{r}
+dea20 <- performDifferentialExp(se = newSE, 
+                              assay = "imputed", 
+                              method = "limma", 
+                              condition = "treatment", 
+                              reference = "Ctrl", 
+                              target = "H.E",
+                              refTime = "0min",
+                              targetTime = "20min")
+```
+
+```{r volcanoPlot_fromPackage20min}
+pFilter = 0.01
+plotVolcano(dea20$resDE, pFilter = 0.01, fcFilter = 1) + theme_classic() +
+  geom_hline(yintercept = -log10(as.numeric(pFilter)), color = "brown",
+               linetype = "dashed") +
+    annotate(x = 3.0, y = -log10(as.numeric(pFilter)) - 0.20,
+             label = paste0("P-value = ", as.numeric(pFilter)),
+             geom = "text", size = 3.5, color = "brown") 
+```
+
+```{r volcanoPlot_notFromPackage20min}
+plotVolcanoDEA(dea20$resDE, fcFilter = 1, pFilter = 0.01, usePadj = FALSE)
+```
+```{r}
+dea40 <- performDifferentialExp(se = newSE, 
+                              assay = "imputed", 
+                              method = "limma", 
+                              condition = "treatment", 
+                              reference = "Ctrl", 
+                              target = "H.E",
+                              refTime = "0min",
+                              targetTime = "40min")
+```
+
+```{r volcanoPlot_fromPackage40min}
+pFilter = 0.01
+plotVolcano(dea40$resDE, pFilter = 0.01, fcFilter = 1) + theme_classic() +
+  geom_hline(yintercept = -log10(as.numeric(pFilter)), color = "brown",
+               linetype = "dashed") +
+    annotate(x = 3.0, y = -log10(as.numeric(pFilter)) - 0.20,
+             label = paste0("P-value = ", as.numeric(pFilter)),
+             geom = "text", size = 3.5, color = "brown") 
+```
+
+```{r volcanoPlot_notFromPackage40min}
+plotVolcanoDEA(dea40$resDE, fcFilter = 1, pFilter = 0.01, usePadj = FALSE)
+```
+
+```{r}
+dea100 <- performDifferentialExp(se = newSE, 
+                              assay = "imputed", 
+                              method = "limma", 
+                              condition = "treatment", 
+                              reference = "Ctrl", 
+                              target = "H.E",
+                              refTime = "0min",
+                              targetTime = "100min")
+```
+
+```{r volcanoPlot_fromPackage100min}
+pFilter = 0.01
+plotVolcano(dea100$resDE, pFilter = 0.01, fcFilter = 1) + theme_classic() +
+  geom_hline(yintercept = -log10(as.numeric(pFilter)), color = "brown",
+               linetype = "dashed") +
+    annotate(x = 3.0, y = -log10(as.numeric(pFilter)) - 0.20,
+             label = paste0("P-value = ", as.numeric(pFilter)),
+             geom = "text", size = 3.5, color = "brown") 
+```
+
+```{r volcanoPlot_notFromPackage100min}
+plotVolcanoDEA(dea100$resDE, fcFilter = 1, pFilter = 0.01, usePadj = FALSE)
 ```
