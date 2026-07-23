@@ -1,0 +1,601 @@
+---
+title: "SmartPhos command line"
+author: "Shubham Agrawal"
+date: "2026-03-02"
+output:
+  BiocStyle::html_document:
+    toc_float: true
+    code_folding: "hide"
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE, dev = c("png","pdf"), fig.path = "./figureCommandLineEGF_FullProteome/")
+library(MultiAssayExperiment)
+devtools::load_all("/Users/shubhamagrawal/Documents/work/SmartPhos") # Option2: load SmartPhos package
+library(tidyverse)
+library(ggpubr)
+library(ggrepel)
+library(DT)
+library(grid)
+library(ggplot2)
+source("helper.R")
+```
+
+# Creating an R object from Spectronaut output files
+
+[Skip for now]
+
+```{r, eval=FALSE}
+filetable <-  read.table(file="/Users/shubhamagrawal/Documents/work/compressed/DIA/fileTable.txt", header = TRUE)
+
+mae <- readExperimentDIA(fileTable = filetable, 
+                         annotation_col = c("treatment", "timepoint", "replicate",
+                                            "sampleType"))
+```
+
+# Use the created object
+
+```{r}
+mae <- readRDS("data/mae20260218.Rds")
+mae
+```
+# Preprocessing the assay, basic visualization, PCA
+
+```{r}
+se <- mae[["Proteome"]]
+colData(se) <- colData(mae[, colnames(se)])
+se
+```
+
+```{r boxplot_unnormalized}
+plotIntensity(se[, se$sampleType == "FullProteome"], color = "replicate") + theme_classic() +
+  theme(
+    axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0, size = 7),
+    plot.title = element_text(hjust = 0.5, face = "bold")
+  ) 
+```
+
+
+```{r}
+newSE <- preprocessProteome(seData = se, transform = "log2", 
+                        normalize = TRUE, impute = "QRILC")
+newSE
+```
+```{r boxplot}
+plotIntensity(newSE, color = "replicate") + theme_classic() +
+  theme(
+    axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0, size = 7),
+    plot.title = element_text(hjust = 0.5, face = "bold")
+  ) 
+```
+```{r sample_completeness}
+plotMissing(newSE) + theme_classic() +
+  theme(
+    axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0, size = 7),
+    plot.title = element_text(hjust = 0.5, face = "bold")
+  ) 
+```
+
+# Perform PCA
+
+```{r}
+pca <- stats::prcomp(t(assays(newSE)[["imputed"]]), center = TRUE, scale. = TRUE)
+```
+
+```{r, eval=FALSE, include=FALSE}
+p <- plotPCA(pca = pca, se = newSE, color = "treatment") +
+  #geom_point(aes(colour = replicate), size = 4) +
+  geom_point(aes(fill=treatment), 
+       colour="black",pch=21, size=4) + coord_equal()
+p
+p <- plotPCA(pca = pca, se = newSE, color = "replicate") +
+  #geom_point(aes(colour = replicate), size = 4) +
+  geom_point(aes(fill=replicate), 
+       colour="black",pch=21, size=4) + coord_equal()
+p
+```
+
+
+```{r pca_withR1}
+p <- plotPCA(pca = pca, se = newSE,
+             color = "treatment",
+             shape = "replicate")
+
+p$layers[[1]]$aes_params$size   <- 3
+p$layers[[1]]$aes_params$stroke <- 1.2
+
+p + coord_equal() + theme(aspect.ratio = 1, legend.position = "right",
+                          axis.text = element_text(color = "#000000")) +
+  guides(
+    shape = guide_legend(order = 1),
+    color = guide_legend(order = 2)
+    )
+```
+
+```{r, eval=FALSE, include=FALSE}
+p <- plotPCA(pca = pca, se = newSE,
+             color = "replicate",
+             shape = "treatment")
+
+p$layers[[1]]$aes_params$size   <- 3
+p$layers[[1]]$aes_params$stroke <- 1.2
+
+p + coord_equal() + theme(aspect.ratio = 1, legend.position = "right",
+                          axis.text = element_text(color = "#000000")) +
+  guides(
+    shape = guide_legend(order = 1),
+    color = guide_legend(order = 2)
+    )
+```
+
+
+# rep1 samples need to be removed or perform batch correction
+
+```{r}
+newSE <- preprocessProteome(seData = se, transform = "log2", 
+                        normalize = TRUE, impute = "QRILC", 
+                        removeOutlier = "rep1")
+newSE
+```
+
+```{r}
+pca <- stats::prcomp(t(assays(newSE)[["imputed"]]), 
+                     center = TRUE, scale. = TRUE)
+```
+
+```{r, eval=FALSE, include=FALSE}
+p <- plotPCA(pca = pca, se = newSE, color = "treatment") + 
+  geom_point(aes(fill=treatment), 
+       colour="black",pch=21, size=4) + coord_equal()
+p
+p <- plotPCA(pca = pca, se = newSE, color = "replicate") + 
+  geom_point(aes(fill=replicate), 
+       colour="black",pch=21, size=4) + coord_equal()
+p
+```
+
+```{r pca_withoutR1}
+p <- plotPCA(pca = pca, se = newSE,
+             color = "treatment",
+             shape = "replicate")
+
+p$layers[[1]]$aes_params$size   <- 3
+p$layers[[1]]$aes_params$stroke <- 1.2
+
+p + coord_equal() + theme(aspect.ratio = 1, legend.position = "right",
+                          axis.text = element_text(color = "#000000")) +
+  geom_text_repel(aes(label = timepoint), max.overlaps = Inf, size = 2.75) +
+  guides(
+    shape = guide_legend(order = 1),
+    color = guide_legend(order = 2)
+    )
+```
+```{r, eval=FALSE, include=FALSE}
+p <- plotPCA(pca = pca, se = newSE,
+             color = "replicate",
+             shape = "treatment")
+
+p$layers[[1]]$aes_params$size   <- 3
+p$layers[[1]]$aes_params$stroke <- 1.2
+
+p + coord_equal() + theme(aspect.ratio = 1, legend.position = "right", 
+                          axis.text = element_text(color = "#000000")) +
+  guides(
+    shape = guide_legend(order = 1),
+    color = guide_legend(order = 2)
+    )
+```
+
+```{r}
+p <- plotHeatmap(type = "Top variant", newSE, top = 30, annotationCol = c("replicate", "treatment"))
+```
+```{r heatmap, fig.width=10, fig.height=8}
+g <- p$gtable
+
+# Find row names grob
+row_names <- which(g$layout$name == "row_names")
+g$grobs[[row_names]]$gp <- gpar(fontsize = 8, fontface = "bold")
+# Same for columns
+col_names <- which(g$layout$name == "col_names")
+g$grobs[[col_names]]$gp <- gpar(fontsize = 10)
+
+grid.newpage()
+grid.draw(g)
+```
+
+
+# Differential expression
+
+```{r}
+dea <- performDifferentialExp(se = newSE, 
+                              assay = "imputed", 
+                              method = "limma", 
+                              condition = "treatment", 
+                              reference = "Ctrl", 
+                              target = "EGF",
+                              refTime = "0min",
+                              targetTime = "10min")
+```
+
+```{r pValue_histogram}
+p <- ggplot(dea$resDE, aes(x = pvalue)) +
+  geom_histogram(fill = "grey", col = "blue", alpha=0.7) +
+  ggtitle("P value histogram") + theme_classic() +
+  theme(plot.title = element_text(hjust = 0.5)) 
+  
+p
+```
+
+```{r, eval=FALSE, include=FALSE}
+plotHeatmap(type = "Differentially expressed", se = dea$seSub, data = dea$resDE, top = 50)
+```
+
+
+```{r volcanoPlot_fromPackage}
+pFilter = 0.01
+plotVolcano(dea$resDE, pFilter = 0.01, fcFilter = 1) + theme_classic() +
+  geom_hline(yintercept = -log10(as.numeric(pFilter)), color = "brown",
+               linetype = "dashed") +
+    annotate(x = 3.0, y = -log10(as.numeric(pFilter)) - 0.20,
+             label = paste0("P-value = ", as.numeric(pFilter)),
+             geom = "text", size = 3.5, color = "brown") 
+```
+```{r volcanoPlot_notFromPackage}
+plotVolcanoDEA(dea$resDE, fcFilter = 1, pFilter = 0.01, usePadj = FALSE)
+```
+
+
+```{r}
+dea$resDE
+```
+
+
+
+```{r intensityBoxPlot_specificPhophosite, eval=FALSE, include=FALSE}
+intensityBoxPlot(se = dea$seSub, id = 's7502', symbol = "MAPK3_T207")
+```
+
+# Time series clustering
+
+```{r}
+set.seed(12345)
+library(matrixStats)
+
+newSEts <- addZeroTime(newSE, condition = "treatment", treat = "EGF",
+                       zeroTreat = "Ctrl",
+                       timeRange = c("10min", "20min","40min","100min", "3h", "6h"))
+
+#newSEts <- newSE[ , newSE$treatment == "EGF"]
+assayMat <- SummarizedExperiment::assay(newSEts)
+
+exprMat <- lapply(unique(newSEts$timepoint), function(tp) {
+  rowMedians(assayMat[,newSEts$timepoint == tp])
+  }) %>% bind_cols() %>% as.matrix()
+
+rownames(exprMat) <- rownames(newSEts)
+colnames(exprMat) <- unique(newSEts$timepoint)
+
+sds <- apply(exprMat,1,sd)
+varPer <- 80
+exprMat <- exprMat[order(sds, decreasing = TRUE)[seq(1, varPer/100*nrow(exprMat))], ]
+# only center when it's for expression
+exprMat <- mscale(exprMat)
+# remove NA values
+exprMat <- exprMat[complete.cases(exprMat), ]
+
+
+tsc <- clusterTS(x = exprMat, k = 5, pCut = 0.4)
+```
+
+```{r timeSeries}
+tsc$plot + theme(
+  axis.text.x = element_text(size = 10), axis.text = element_text(color = "#000000")) 
+```
+```{r, include=FALSE, eval=FALSE}
+tsc$plot + theme_void() + theme(legend.position = "none", strip.text = element_text(size=0)) + scale_color_gradient(low = "black", high = "green") + geom_line( aes(col = prob), alpha=1)
+```
+
+
+```{r singleSiteTimeSeries}
+timerange <- unique(newSEts$timepoint)
+plotTimeSeries(newSEts, type = "expression", geneID = "s40", 
+               symbol = "RBM47_T519", condition = "treatment",
+               treatment = "EGF", timerange = timerange)
+```
+
+
+```{r, eval=FALSE, include=FALSE}
+timerange <- unique(newSEts$timepoint)
+p <- plotTimeSeries(newSEts, type = "expression", geneID = "s40", symbol = "RBM47_T519", condition = "treatment", treatment = "EGF", timerange = timerange)
+p
+lapply(p$layers, function(l) class(l$geom)[1])
+p$layers[[1]]$aes_params$size <- 4
+p$layers[[1]]$mapping$colour <- NULL
+p$layers[[1]]$aes_params$colour <- "#c1191f"
+p$layers[[2]]$aes_params$linewidth <- 1
+p$layers[[2]]$mapping$colour <- NULL
+p$layers[[2]]$aes_params$colour <- "#000000"
+p + theme(axis.text = element_text(color = "#000000")) + scale_x_continuous(breaks = c(0,20,40,60,80,100))
+
+```
+
+
+
+# Enrichment analysis
+
+```{r}
+genesetPath <- system.file("shiny-app/geneset", package = "SmartPhos")
+inGMT1 <- piano::loadGSC(paste0(genesetPath, "/Cancer_Hallmark.gmt"), 
+                         type="gmt")
+```
+
+```{r}
+resTab <- enrichDifferential(dea = dea$resDE, type = "Pathway enrichment", 
+                             gsaMethod = "PAGE", geneSet = inGMT1, 
+                             statType = "stat", nPerm = 200, sigLevel = 0.05, 
+                             ifFDR = FALSE)
+resTab
+```
+
+```{r, include=FALSE, eval=FALSE}
+clustEnr <- clusterEnrich(clusterTab = tsc$cluster, se = newSE, 
+                          inputSet = inGMT1, filterP = 0.05, ifFDR = FALSE) 
+clustEnr$plot + theme_light() + theme(
+    axis.text.y = element_text(size = 10)
+  ) 
+```
+
+```{r}
+inGMT2 <- piano::loadGSC(paste0(genesetPath, "/KEGG_pathways.gmt"), 
+                         type="gmt")
+clustEnr <- clusterEnrich(clusterTab = tsc$cluster, se = newSE, 
+                          inputSet = inGMT2, filterP = 0.01, ifFDR = FALSE)
+```
+
+
+```{r}
+clustEnrX <- clusterEnrichExp(clusterTab = tsc$cluster, se = newSE, 
+                          inputSet = inGMT2, filterP = 0.01, ifFDR = FALSE)
+```
+
+
+```{r, include=FALSE, eval=FALSE}
+clustEnr$plot + theme_light() + theme(axis.text = element_text(color = "#000000"))
+```
+
+```{r cluster_enrichment}
+clustEnrX$plot + theme_classic()
+```
+```{r}
+# download the list
+df <- as.data.frame(clustEnrX$table)
+df2 <- apply(df,2,as.character)
+write.csv(df2, "ClusterEnrichmentListEGF.csv")
+```
+
+
+# Kinase activity inference
+
+First on the differential expression analysis results
+
+```{r kinaseActivity}
+netw <- getDecouplerNetwork("Homo sapiens")
+scoreTab <- calcKinaseScore(dea$resDE, netw, statType = "stat", nPerm = 100)
+plotKinaseDE(scoreTab, nTop = 10, pCut = 0.05)
+```
+
+
+```{r, eval=FALSE}
+clusterData <- tsc$cluster[tsc$cluster$cluster == "cluster1",]
+allClusterFeature <- clusterData %>%
+  distinct(feature, .keep_all = TRUE) %>% .$feature
+allClusterSite <- data.frame(rowData(newSEts)[allClusterFeature, "site"])
+allClusterSite$feature <- allClusterFeature
+clusterData <- clusterData %>%
+  left_join(allClusterSite, by = "feature") %>%
+  rename(site = "rowData.newSEts..allClusterFeature...site..")
+scoreTab <- calcKinaseScore(clusterData, netw, statType = "stat", nPerm = 100)
+plotKinaseTimeSeries(scoreTab, pCut = 0.05, clusterName = "cluster1")
+```
+
+
+# Phosphosites pattern
+
+```{r phophosites, include=FALSE, eval=FALSE}
+newSEts <- addZeroTime(newSE, condition = "treatment", treat = "EGF",
+                       zeroTreat = "Ctrl",
+                       timeRange = c("10min", "20min","40min","100min"))
+
+rd <- as.data.frame(rowData(newSEts))
+timerange <- unique(newSEts$timepoint)
+sites <-  c("MET_Y1234",  "MET_Y1235", "MET_1003", "Shc1_Y427", "AKT3_Y312", "RPS6KB1", "EGFR_Y1092", "EGFR_Y1172", "SOS1_S1134", "MAP2K2_S226", "MAPK3_T202", "MAPK1_T190", "EGFR_Y1197", "ERBB2_S998","GAB1_Y659","RPS6_S244")
+
+for (i in sites) {
+  # condition to check if that site is present in row data
+  if (i %in% rd$site) {
+    # condition to check if assay doesn't have NAs (imputed assays are not allowed)
+    if (!is.na(assay(newSEts)[rownames(rd[rd$site==i,]), ][1])) {
+      p <- plotTimeSeries(newSEts, type = "expression", 
+                        geneID = rownames(rd[rd$site==i,]), 
+                        symbol = i, condition = "treatment", 
+                        treatment = "EGF", timerange = timerange) +
+        theme(axis.text = element_text(color = "#000000", size = 20), 
+              axis.text.x = element_text(angle = 0, vjust = 0, hjust = 0.5, size = 20),
+              axis.title = element_text(size=20),
+              plot.title = element_text(size=30)) + 
+        scale_x_continuous(breaks = c(0,20,40,60,80,100))
+      p$layers[[1]]$aes_params$size <- 6
+      p$layers[[1]]$mapping$colour <- NULL
+      p$layers[[1]]$aes_params$colour <- "#c1191f"
+      p$layers[[2]]$aes_params$linewidth <- 1
+      p$layers[[2]]$mapping$colour <- NULL
+      p$layers[[2]]$aes_params$colour <- "#555555"
+      print(p)
+    }
+  }
+}
+```
+
+```{r phosphosites, fig.path = "./figureCommandLineEGF_FullProteome/phosphosites/"}
+newSEts <- addZeroTime(newSE, condition = "treatment", treat = "EGF",
+                       zeroTreat = "Ctrl",
+                       timeRange = c("10min", "20min","40min","100min"))
+
+rd <- as.data.frame(rowData(newSEts))
+timerange <- unique(newSEts$timepoint)
+geneList <-  c("MET", "Shc1", "AKT1", "AKT2", "AKT3", "RPS6KA1", "RPS6KA3", "RPS6KA4", "RPS6KB1", "EGFR", "SOS1", "MAP2K2", "MAPK3", "MAPK1", "ERBB2","GAB1","RPS6", "RAF1", "RPS6", "TGFBR2", "AXL", "MTOR")
+
+for (i in geneList) {
+  # condition to check if that site is present in row data
+  if (i %in% rd$Gene) {
+    sites <- rd[rd$Gene==i,]$site
+    for (j in sites) {
+      # condition to check if assay doesn't have NAs (imputed assays are not allowed)
+      if (!is.na(assay(newSEts)[rownames(rd[rd$site==j,]), ][1])) {
+        p <- plotTimeSeries(newSEts, type = "expression", 
+                          geneID = rownames(rd[rd$site==j,]), 
+                          symbol = j, condition = "treatment", 
+                          treatment = "EGF", timerange = timerange) +
+          theme(axis.text = element_text(color = "#000000", size = 20), 
+                axis.text.x = element_text(angle = 0, vjust = 0, hjust = 0.5, size = 20),
+                axis.title = element_text(size=20),
+                plot.title = element_text(size=30)) + 
+          scale_x_continuous(breaks = c(0,20,40,60,80,100))
+        p$layers[[1]]$aes_params$size <- 6
+        p$layers[[1]]$mapping$colour <- NULL
+        p$layers[[1]]$aes_params$colour <- "#c1191f"
+        p$layers[[2]]$aes_params$linewidth <- 1
+        p$layers[[2]]$mapping$colour <- NULL
+        p$layers[[2]]$aes_params$colour <- "#555555"
+        print(p)
+      }
+    }
+  }
+}
+```
+# Differential expression for other timepoints
+
+```{r}
+dea20 <- performDifferentialExp(se = newSE, 
+                              assay = "imputed", 
+                              method = "limma", 
+                              condition = "treatment", 
+                              reference = "Ctrl", 
+                              target = "EGF",
+                              refTime = "0min",
+                              targetTime = "20min")
+```
+
+```{r volcanoPlot_fromPackage20min}
+pFilter = 0.01
+plotVolcano(dea20$resDE, pFilter = 0.01, fcFilter = 1) + theme_classic() +
+  geom_hline(yintercept = -log10(as.numeric(pFilter)), color = "brown",
+               linetype = "dashed") +
+    annotate(x = 3.0, y = -log10(as.numeric(pFilter)) - 0.20,
+             label = paste0("P-value = ", as.numeric(pFilter)),
+             geom = "text", size = 3.5, color = "brown") 
+```
+
+```{r volcanoPlot_notFromPackage20min}
+plotVolcanoDEA(dea20$resDE, fcFilter = 1, pFilter = 0.01, usePadj = FALSE)
+```
+```{r}
+dea40 <- performDifferentialExp(se = newSE, 
+                              assay = "imputed", 
+                              method = "limma", 
+                              condition = "treatment", 
+                              reference = "Ctrl", 
+                              target = "EGF",
+                              refTime = "0min",
+                              targetTime = "40min")
+```
+
+```{r volcanoPlot_fromPackage40min}
+pFilter = 0.01
+plotVolcano(dea40$resDE, pFilter = 0.01, fcFilter = 1) + theme_classic() +
+  geom_hline(yintercept = -log10(as.numeric(pFilter)), color = "brown",
+               linetype = "dashed") +
+    annotate(x = 3.0, y = -log10(as.numeric(pFilter)) - 0.20,
+             label = paste0("P-value = ", as.numeric(pFilter)),
+             geom = "text", size = 3.5, color = "brown") 
+```
+
+```{r volcanoPlot_notFromPackage40min}
+plotVolcanoDEA(dea40$resDE, fcFilter = 1, pFilter = 0.01, usePadj = FALSE)
+```
+
+```{r}
+dea100 <- performDifferentialExp(se = newSE, 
+                              assay = "imputed", 
+                              method = "limma", 
+                              condition = "treatment", 
+                              reference = "Ctrl", 
+                              target = "EGF",
+                              refTime = "0min",
+                              targetTime = "100min")
+```
+
+```{r volcanoPlot_fromPackage100min}
+pFilter = 0.01
+plotVolcano(dea100$resDE, pFilter = 0.01, fcFilter = 1) + theme_classic() +
+  geom_hline(yintercept = -log10(as.numeric(pFilter)), color = "brown",
+               linetype = "dashed") +
+    annotate(x = 3.0, y = -log10(as.numeric(pFilter)) - 0.20,
+             label = paste0("P-value = ", as.numeric(pFilter)),
+             geom = "text", size = 3.5, color = "brown") 
+```
+
+```{r volcanoPlot_notFromPackage100min}
+plotVolcanoDEA(dea100$resDE, fcFilter = 1, pFilter = 0.01, usePadj = FALSE)
+```
+
+```{r}
+dea3 <- performDifferentialExp(se = newSE, 
+                              assay = "imputed", 
+                              method = "limma", 
+                              condition = "treatment", 
+                              reference = "Ctrl", 
+                              target = "EGF",
+                              refTime = "0min",
+                              targetTime = "3h")
+```
+
+```{r volcanoPlot_fromPackage3h}
+pFilter = 0.01
+plotVolcano(dea3$resDE, pFilter = 0.01, fcFilter = 1) + theme_classic() +
+  geom_hline(yintercept = -log10(as.numeric(pFilter)), color = "brown",
+               linetype = "dashed") +
+    annotate(x = 3.0, y = -log10(as.numeric(pFilter)) - 0.20,
+             label = paste0("P-value = ", as.numeric(pFilter)),
+             geom = "text", size = 3.5, color = "brown") 
+```
+
+```{r volcanoPlot_notFromPackage3h}
+plotVolcanoDEA(dea3$resDE, fcFilter = 1, pFilter = 0.01, usePadj = FALSE)
+```
+
+```{r}
+dea6 <- performDifferentialExp(se = newSE, 
+                              assay = "imputed", 
+                              method = "limma", 
+                              condition = "treatment", 
+                              reference = "Ctrl", 
+                              target = "EGF",
+                              refTime = "0min",
+                              targetTime = "6h")
+```
+
+```{r volcanoPlot_fromPackage6h}
+pFilter = 0.01
+plotVolcano(dea6$resDE, pFilter = 0.01, fcFilter = 1) + theme_classic() +
+  geom_hline(yintercept = -log10(as.numeric(pFilter)), color = "brown",
+               linetype = "dashed") +
+    annotate(x = 3.0, y = -log10(as.numeric(pFilter)) - 0.20,
+             label = paste0("P-value = ", as.numeric(pFilter)),
+             geom = "text", size = 3.5, color = "brown") 
+```
+
+```{r volcanoPlot_notFromPackage6h}
+plotVolcanoDEA(dea6$resDE, fcFilter = 1, pFilter = 0.01, usePadj = FALSE)
+```
+
