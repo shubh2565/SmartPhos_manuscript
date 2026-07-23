@@ -296,7 +296,7 @@ tsc$plot + theme_void() + theme(legend.position = "none", strip.text = element_t
 ```
 
 
-```{r singleSiteTimeSeries}
+```{r singleSiteTimeSeries, eval=FALSE, include=FALSE}
 timerange <- unique(newSEts$timepoint)
 plotTimeSeries(newSEts, type = "expression", geneID = "s40", 
                symbol = "RBM47_T519", condition = "treatment",
@@ -378,7 +378,7 @@ write.csv(df2, "ClusterEnrichmentListEGF.csv")
 
 First on the differential expression analysis results
 
-```{r kinaseActivity}
+```{r kinaseActivity, eval=FALSE, include=FALSE}
 netw <- getDecouplerNetwork("Homo sapiens")
 scoreTab <- calcKinaseScore(dea$resDE, netw, statType = "stat", nPerm = 100)
 plotKinaseDE(scoreTab, nTop = 10, pCut = 0.05)
