@@ -47,6 +47,37 @@ colData(se) <- colData(mae[, colnames(se)])
 se
 ```
 
+```{r}
+se1 <- se[, se$sampleType == "Phospho" & se$replicate != "rep1"]
+# Extract the assay data from the SummarizedExperiment object
+countMat <- assay(se1)
+
+# Create a table with sample names and their corresponding percentage of
+# non-missing values
+plotTab <- tibble(
+  sample = se1$sample,
+  total = colSums(!is.na(countMat)) 
+)
+```
+
+
+```{r totalPhosphosites_SmartPhos}
+# Generate the bar plot using ggplot2
+g <- ggplot(plotTab, aes(x = sample, y = total)) +
+  geom_bar(stat = "identity") +
+  ggtitle("Total phosphosites for each sample") +
+  ylab("Total Phosphosites") +
+  theme_classic() +
+  theme(legend.position = "none", 
+        axis.text.x = element_text(angle = 90, hjust = 1, vjust = 0, size = 9),
+    plot.title = element_text(hjust = 0.5, face = "bold")
+  ) + ylab("Total number of detected phosphorylation sites") + xlab("Replicate") 
+  
+g
+```
+
+
+
 ```{r boxplot_unnormalized}
 plotIntensity(se[, se$sampleType == "Phospho"], color = "replicate") + theme_classic() +
   theme(
@@ -102,10 +133,16 @@ p <- plotPCA(pca = pca, se = newSE,
              shape = "replicate")
 
 p$layers[[1]]$aes_params$size   <- 3
-p$layers[[1]]$aes_params$stroke <- 1.2
+p$layers[[1]]$aes_params$stroke <- 1.0
 
-p + coord_equal() + theme(aspect.ratio = 1, legend.position = "right",
-                          axis.text = element_text(color = "#000000")) +
+p + coord_equal() + 
+  theme(aspect.ratio = 1, legend.position = "right", 
+        axis.text = element_text(color = "#000000"),
+        axis.text.y=element_text(size=14),
+        axis.text.x=element_text(size=14),
+        legend.text = element_text(size = 12),
+        legend.title = element_text(size = 12, face = "bold"),
+        axis.title=element_text(size=16,face="bold")) +
   guides(
     shape = guide_legend(order = 1),
     color = guide_legend(order = 2)
@@ -160,10 +197,16 @@ p <- plotPCA(pca = pca, se = newSE,
              shape = "replicate")
 
 p$layers[[1]]$aes_params$size   <- 3
-p$layers[[1]]$aes_params$stroke <- 1.2
+p$layers[[1]]$aes_params$stroke <- 1.0
 
-p + coord_equal() + theme(aspect.ratio = 1, legend.position = "right",
-                          axis.text = element_text(color = "#000000")) +
+p + coord_equal() + 
+  theme(aspect.ratio = 1, legend.position = "right", 
+        axis.text = element_text(color = "#000000"),
+        axis.text.y=element_text(size=14),
+        axis.text.x=element_text(size=14),
+        legend.text = element_text(size = 12),
+        legend.title = element_text(size = 12, face = "bold"),
+        axis.title=element_text(size=16,face="bold")) +
   geom_text_repel(aes(label = timepoint), max.overlaps = Inf, size = 2.75) +
   guides(
     shape = guide_legend(order = 1),
@@ -238,10 +281,11 @@ plotVolcano(dea$resDE, pFilter = 0.01, fcFilter = 1) + theme_classic() +
                linetype = "dashed") +
     annotate(x = 3.0, y = -log10(as.numeric(pFilter)) - 0.20,
              label = paste0("P-value = ", as.numeric(pFilter)),
-             geom = "text", size = 3.5, color = "brown") 
+             geom = "text", size = 5.0, color = "brown") 
 ```
 ```{r volcanoPlot_notFromPackage}
-plotVolcanoDEA(dea$resDE, fcFilter = 1, pFilter = 0.01, usePadj = FALSE)
+plotVolcanoDEA(dea$resDE, fcFilter = 1, pFilter = 0.01, usePadj = FALSE, 
+               title = "Phospho EGF 10 min vs Ctrl ")
 ```
 
 

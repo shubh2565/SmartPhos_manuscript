@@ -444,7 +444,7 @@ plotVolcanoDEA <- function(resDE, pFilter = 0.05, fcFilter = 0.5,
                linetype = "dashed") +
     annotate(x = 3.0, y = -log10(as.numeric(pFilter)) - 0.15,
              label = paste("P-value = ", as.numeric(pFilter)),
-             geom = "text", size = 4, color = "brown") +
+             geom = "text", size = 5.0, color = "brown") +
     # Add horizontal lines for p-value thresholds
     geom_hline(yintercept = -log10(as.numeric(pFilter)), color = "brown",
                linetype = "dashed") +
@@ -468,7 +468,14 @@ plotVolcanoDEA <- function(resDE, pFilter = 0.05, fcFilter = 0.5,
     xlab("absolute log2(Quantity) difference") +
     ggtitle(title) +
     theme_classic() +
-    theme(plot.title = element_text(hjust = 0.5))
+    theme(aspect.ratio = 1, legend.position = "right", 
+          axis.text = element_text(color = "#000000"),
+          axis.text.y=element_text(size=14),
+          axis.text.x=element_text(size=14),
+          legend.text = element_text(size = 12),
+          legend.title = element_text(size = 12, face = "bold"),
+          axis.title=element_text(size=16,face="bold"),
+          plot.title = element_text(size = 16, hjust = 0.5))
   
   return(v)
 }
