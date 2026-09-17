@@ -285,7 +285,7 @@ plotVolcano(dea$resDE, pFilter = 0.01, fcFilter = 1) + theme_classic() +
 ```
 ```{r volcanoPlot_notFromPackage}
 plotVolcanoDEA(dea$resDE, fcFilter = 1, pFilter = 0.01, usePadj = FALSE, 
-               title = "Phospho EGF 10 min vs Ctrl ")
+               title = "Phospho EGF 10 min vs Ctrl")
 ```
 
 
@@ -541,7 +541,8 @@ plotVolcano(dea20$resDE, pFilter = 0.01, fcFilter = 1) + theme_classic() +
 ```
 
 ```{r volcanoPlot_notFromPackage20min}
-plotVolcanoDEA(dea20$resDE, fcFilter = 1, pFilter = 0.01, usePadj = FALSE)
+plotVolcanoDEA(dea20$resDE, fcFilter = 1, pFilter = 0.01, usePadj = FALSE,
+               title = "Phospho EGF 20 min vs Ctrl")
 ```
 ```{r}
 dea40 <- performDifferentialExp(se = newSE, 
@@ -565,7 +566,8 @@ plotVolcano(dea40$resDE, pFilter = 0.01, fcFilter = 1) + theme_classic() +
 ```
 
 ```{r volcanoPlot_notFromPackage40min}
-plotVolcanoDEA(dea40$resDE, fcFilter = 1, pFilter = 0.01, usePadj = FALSE)
+plotVolcanoDEA(dea40$resDE, fcFilter = 1, pFilter = 0.01, usePadj = FALSE, 
+               title = "Phospho EGF 40 min vs Ctrl")
 ```
 
 ```{r}
@@ -590,5 +592,6 @@ plotVolcano(dea100$resDE, pFilter = 0.01, fcFilter = 1) + theme_classic() +
 ```
 
 ```{r volcanoPlot_notFromPackage100min}
-plotVolcanoDEA(dea100$resDE, fcFilter = 1, pFilter = 0.01, usePadj = FALSE)
+plotVolcanoDEA(dea100$resDE, fcFilter = 1, pFilter = 0.01, usePadj = FALSE,
+               title = "Phospho EGF 40 min vs Ctrl")
 ```
