@@ -191,7 +191,12 @@ g <- ggplot(plotTabComb, aes(x = replicate, y = total)) +
                                "SmartPhos" = "#90bfce")) +
   theme_classic() +
   theme(legend.position = "none", 
-    plot.title = element_text(hjust = 0.5, face = "bold")
+        axis.text = element_text(color = "#000000"),
+        axis.text.y=element_text(size=14),
+        axis.text.x=element_text(size=14),
+        axis.title=element_text(size=16,face="bold"),
+        strip.text = element_text(size = 14),
+    plot.title = element_text(hjust = 0.5, face = "bold", size = 16)
   ) +
   facet_grid(~ experiment, scales="free") 
   
@@ -327,14 +332,14 @@ ggsave(filename = "figureDataAnalysisFinalFullProteome/Fig2_PanelC.pdf",
 ```
 
 
-```{r missingRate_comparison}
+```{r Fig3_PanelC_missingRate}
 expInSolution5 <- calc_missing_curve(assay(seInSolution5), "InSolutionDigest")
 expTitration5 <- calc_missing_curve(assay(seTitration5), "SmartPhos")
 results <- bind_rows(expInSolution5, expTitration5)
 
 fig3_panelC <- ggplot(results, aes(x = missing_rate, y = n_sites, color = experiment)) +
-  geom_line(linewidth = 1.1) +
-  geom_point(size = 2.5, shape = 16) +
+  geom_line(linewidth = 2.2) +
+  geom_point(size = 5.0, shape = 16) +
   scale_color_manual(values = c("InSolutionDigest" = "#a3a7b2", 
                                "SmartPhos" = "#90bfce")) +
   labs(
@@ -351,19 +356,15 @@ fig3_panelC <- fig3_panelC+
   ylab("Number of Proteins")+
   labs(title = NULL,
        color = "Experiment")+
-  theme(axis.text.y=element_text(size=6),
-            axis.text.x=element_text(size=6),
-            axis.title=element_text(size=7,face="bold"))+
-  theme(legend.title = element_text(size = 5, face = "bold"),
-            legend.text = element_text(size = 5),
-            legend.key.size = unit(0.1, 'in'),
-            legend.position = "top")
+  theme(aspect.ratio = 1, legend.position = "right", 
+        axis.text = element_text(color = "#000000"),
+        axis.text.y=element_text(size=14),
+        axis.text.x=element_text(size=14),
+        legend.text = element_text(size = 12),
+        legend.title = element_text(size = 12, face = "bold"),
+        axis.title=element_text(size=16,face="bold"))
 
-ggsave(filename = "figureDataAnalysisFinalFullProteome/Fig3_PanelC.pdf",
-       plot = fig3_panelC,
-       width = 2.9,
-       height = 2.9)
-  
+fig3_panelC
 ```
 
 # Checking for specific phosphosites detected
@@ -461,13 +462,13 @@ fig2_panelD <- fig2_panelD+
   xlab("Protein ug")+
   labs(title = NULL,
        color = "Protein ug")+
-  theme(axis.text.y=element_text(size=6),
-            axis.text.x=element_text(size=6),
-            axis.title=element_text(size=7,face="bold"))+
-  theme(legend.title = element_text(size = 5, face = "bold"),
-            legend.text = element_text(size = 5),
-            legend.key.size = unit(0.1, 'in'),
-            legend.position = "none")
+  theme(aspect.ratio = 1, legend.position = "right", 
+        axis.text = element_text(color = "#000000"),
+        axis.text.y=element_text(size=14),
+        axis.text.x=element_text(size=14),
+        legend.text = element_text(size = 12),
+        legend.title = element_text(size = 12, face = "bold"),
+        axis.title=element_text(size=16,face="bold"))
 
 ggsave(filename = "figureDataAnalysisFinalFullProteome/Fig2_PanelD.pdf",
        plot = fig2_panelD,

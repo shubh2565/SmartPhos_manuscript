@@ -142,7 +142,7 @@ p + coord_equal() +
         axis.text.x=element_text(size=14),
         legend.text = element_text(size = 12),
         legend.title = element_text(size = 12, face = "bold"),
-        axis.title=element_text(size=16,face="bold")) +
+        axis.title=element_text(size=16)) +
   guides(
     shape = guide_legend(order = 1),
     color = guide_legend(order = 2)
@@ -206,7 +206,7 @@ p + coord_equal() +
         axis.text.x=element_text(size=14),
         legend.text = element_text(size = 12),
         legend.title = element_text(size = 12, face = "bold"),
-        axis.title=element_text(size=16,face="bold")) +
+        axis.title=element_text(size=16)) +
   geom_text_repel(aes(label = timepoint), max.overlaps = Inf, size = 2.75) +
   guides(
     shape = guide_legend(order = 1),
