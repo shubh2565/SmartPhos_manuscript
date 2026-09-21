@@ -472,8 +472,8 @@ plotVolcanoDEA <- function(resDE, pFilter = 0.05, fcFilter = 0.5,
           axis.text = element_text(color = "#000000"),
           axis.text.y=element_text(size=14),
           axis.text.x=element_text(size=14),
-          legend.text = element_text(size = 12),
-          legend.title = element_text(size = 12, face = "bold"),
+          legend.text = element_text(size = 14),
+          legend.title = element_text(size = 14, face = "bold"),
           axis.title=element_text(size=16),
           plot.title = element_text(size = 16, hjust = 0.5, face = "bold"))
   

@@ -194,7 +194,7 @@ g <- ggplot(plotTabComb, aes(x = replicate, y = total)) +
         axis.text = element_text(color = "#000000"),
         axis.text.y=element_text(size=14),
         axis.text.x=element_text(size=14),
-        axis.title=element_text(size=16,face="bold"),
+        axis.title=element_text(size=16),
         strip.text = element_text(size = 14),
     plot.title = element_text(hjust = 0.5, face = "bold", size = 16)
   ) +
@@ -319,7 +319,7 @@ fig2_panelC <- fig2_panelC+
        color = "Protein ug")+
   theme(axis.text.y=element_text(size=6),
             axis.text.x=element_text(size=6),
-            axis.title=element_text(size=7,face="bold"))+
+            axis.title=element_text(size=7))+
   theme(legend.title = element_text(size = 5, face = "bold"),
             legend.text = element_text(size = 5),
             legend.key.size = unit(0.1, 'in'),
@@ -360,9 +360,9 @@ fig3_panelC <- fig3_panelC+
         axis.text = element_text(color = "#000000"),
         axis.text.y=element_text(size=14),
         axis.text.x=element_text(size=14),
-        legend.text = element_text(size = 12),
-        legend.title = element_text(size = 12, face = "bold"),
-        axis.title=element_text(size=16,face="bold"))
+        legend.text = element_text(size = 14),
+        legend.title = element_text(size = 16, face = "bold"),
+        axis.title=element_text(size=16))
 
 fig3_panelC
 ```
@@ -466,9 +466,9 @@ fig2_panelD <- fig2_panelD+
         axis.text = element_text(color = "#000000"),
         axis.text.y=element_text(size=14),
         axis.text.x=element_text(size=14),
-        legend.text = element_text(size = 12),
-        legend.title = element_text(size = 12, face = "bold"),
-        axis.title=element_text(size=16,face="bold"))
+        legend.text = element_text(size = 14),
+        legend.title = element_text(size = 16, face = "bold"),
+        axis.title=element_text(size=16,))
 
 ggsave(filename = "figureDataAnalysisFinalFullProteome/Fig2_PanelD.pdf",
        plot = fig2_panelD,
@@ -515,9 +515,9 @@ fig3_panelD <- fig3_panelD+
   xlab("Experiment")+
   labs(title = NULL,
        color = "Experiment")+
-  theme(axis.text.y=element_text(size=6),
-            axis.text.x=element_text(size=6),
-            axis.title=element_text(size=7,face="bold"))+
+  theme(axis.text.y=element_text(size=8),
+            axis.text.x=element_text(size=8),
+            axis.title=element_text(size=10))+
   theme(legend.title = element_text(size = 5, face = "bold"),
             legend.text = element_text(size = 5),
             legend.key.size = unit(0.1, 'in'),
