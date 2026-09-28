@@ -102,10 +102,16 @@ p <- plotPCA(pca = pca, se = newSE,
              shape = "replicate")
 
 p$layers[[1]]$aes_params$size   <- 3
-p$layers[[1]]$aes_params$stroke <- 1.2
+p$layers[[1]]$aes_params$stroke <- 1.0
 
-p + coord_equal() + theme(aspect.ratio = 1, legend.position = "right",
-                          axis.text = element_text(color = "#000000")) +
+p + coord_equal() + 
+  theme(aspect.ratio = 1, legend.position = "right", 
+        axis.text = element_text(color = "#000000"),
+        axis.text.y=element_text(size=14),
+        axis.text.x=element_text(size=14),
+        legend.text = element_text(size = 14),
+        legend.title = element_text(size = 14, face = "bold"),
+        axis.title=element_text(size=16)) +
   guides(
     shape = guide_legend(order = 1),
     color = guide_legend(order = 2)
@@ -160,10 +166,16 @@ p <- plotPCA(pca = pca, se = newSE,
              shape = "replicate")
 
 p$layers[[1]]$aes_params$size   <- 3
-p$layers[[1]]$aes_params$stroke <- 1.2
+p$layers[[1]]$aes_params$stroke <- 1.0
 
-p + coord_equal() + theme(aspect.ratio = 1, legend.position = "right",
-                          axis.text = element_text(color = "#000000")) +
+p + coord_equal() + 
+  theme(aspect.ratio = 1, legend.position = "right", 
+        axis.text = element_text(color = "#000000"),
+        axis.text.y=element_text(size=14),
+        axis.text.x=element_text(size=14),
+        legend.text = element_text(size = 14),
+        legend.title = element_text(size = 14, face = "bold"),
+        axis.title=element_text(size=16)) +
   geom_text_repel(aes(label = timepoint), max.overlaps = Inf, size = 2.75) +
   guides(
     shape = guide_legend(order = 1),
@@ -365,7 +377,7 @@ clustEnr$plot + theme_light() + theme(axis.text = element_text(color = "#000000"
 ```
 
 ```{r cluster_enrichment}
-clustEnrX$plot + theme_classic()
+clustEnrX$plot + theme_classic() 
 ```
 ```{r}
 # download the list
