@@ -537,6 +537,7 @@ clusterEnrichExp <- function(clusterTab, se, inputSet, reference = NULL,
               aes(x=cluster, y=Name, customdata = cluster, key = Name)) +
     geom_point(aes(size = Gene.number,fill=-log10(pval)), shape = 21,
                color = "black") +
+    scale_size_continuous(range = c(5, 35)) +
     scale_fill_gradient(low = "white", high = "red") +
     xlab("Cluster") +
     ylab("Pathway") +

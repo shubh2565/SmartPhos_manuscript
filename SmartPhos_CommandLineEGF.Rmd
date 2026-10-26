@@ -136,6 +136,7 @@ p$layers[[1]]$aes_params$size   <- 5.0
 p$layers[[1]]$aes_params$stroke <- 1.0
 
 p + coord_equal() + 
+  scale_shape_manual(values = c(1, 2, 0)) +
   theme(aspect.ratio = 1, legend.position = "right", 
         axis.text = element_text(color = "#000000"),
         axis.text.y=element_text(size=18),
@@ -200,6 +201,7 @@ p$layers[[1]]$aes_params$size   <- 5.0
 p$layers[[1]]$aes_params$stroke <- 1.0
 
 p + coord_equal() + 
+  scale_shape_manual(values = c(2, 0)) +
   theme(aspect.ratio = 1, legend.position = "right", 
         axis.text = element_text(color = "#000000"),
         axis.text.y=element_text(size=18),
@@ -408,8 +410,19 @@ clustEnr$plot + theme_light() + theme(axis.text = element_text(color = "#000000"
 ```
 
 ```{r cluster_enrichment}
-clustEnrX$plot + theme_classic()
+p <- clustEnrX$plot + theme_classic() +
+  theme(axis.text.y=element_text(size=14),
+            axis.text.x=element_text(size=14),
+            axis.title=element_text(size=18))+
+  theme(legend.title = element_text(size = 18),
+            legend.text = element_text(size = 18),
+            legend.key.size = unit(0.1, 'in'))
+ggsave(filename = "figureCommandLineEGF/Enrichment_EGF.pdf",
+       plot = p,
+       width = 12.0,
+       height = 10.0)
 ```
+
 ```{r}
 # download the list
 df <- as.data.frame(clustEnrX$table)

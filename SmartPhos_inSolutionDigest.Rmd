@@ -177,7 +177,7 @@ datatable(scoreTab, options = list(pageLength = 10)) %>%
   formatRound(columns = c("score", "p_value"), digits = 3)
 ```
 
-```{r kinaseActivity}
+```{r kinaseActivity, fig.width=8, fig.height=6}
 p <- plotKinaseDE(scoreTab, nTop = 10, pCut = 0.05) + ylim(-2, 8) + theme(
     legend.position = c(0.98, 0.05),
     legend.justification = c(1, 0),

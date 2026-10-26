@@ -361,7 +361,7 @@ fig3_panelC <- fig3_panelC+
 
 ggsave(filename = "figureDataAnalysisFinal/Fig3_PanelC.pdf",
        plot = fig3_panelC,
-       width = 2.9,
+       width = 3.5,
        height = 2.9)
   
 ```
@@ -524,7 +524,7 @@ fig3_panelD <- fig3_panelD+
 
 ggsave(filename = "figureDataAnalysisFinal/Fig3_PanelD.pdf",
        plot = fig3_panelD,
-       width = 2.9,
+       width = 3.5,
        height = 2.9)
 ```
 

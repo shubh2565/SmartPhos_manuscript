@@ -105,6 +105,7 @@ p$layers[[1]]$aes_params$size   <- 5
 p$layers[[1]]$aes_params$stroke <- 1.0
 
 p + coord_equal() + 
+  scale_shape_manual(values = c(1, 2, 0)) +
   theme(aspect.ratio = 1, legend.position = "right", 
         axis.text = element_text(color = "#000000"),
         axis.text.y=element_text(size=18),
@@ -169,6 +170,7 @@ p$layers[[1]]$aes_params$size   <- 5
 p$layers[[1]]$aes_params$stroke <- 1.0
 
 p + coord_equal() + 
+  scale_shape_manual(values = c(2, 0)) +
   theme(aspect.ratio = 1, legend.position = "right", 
         axis.text = element_text(color = "#000000"),
         axis.text.y=element_text(size=18),
