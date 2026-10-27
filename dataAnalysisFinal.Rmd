@@ -216,7 +216,7 @@ plotTabComb <- rbind(plotTabD, plotTabT)
 ```
 
 ```{r}
-write.csv(plotTabComb, "totalComparisonTInSolutionTitration.csv", row.names = FALSE)
+write.csv(plotTabComb, "totalComparisonInSolutionTitration.csv", row.names = FALSE)
 ```
 
 

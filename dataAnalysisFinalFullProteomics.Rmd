@@ -150,7 +150,7 @@ countMatD <- assay(seD)
 plotTabD <- tibble(
   sample = seD$sample,
   replicate = seD$replicate,
-  total = colSums(!is.na(countMatD)),
+  totalProteins = colSums(!is.na(countMatD)),
   experiment = "InSolutionDigest"
 )
 
@@ -160,11 +160,15 @@ countMatT <- assay(seT)
 plotTabT <- tibble(
   sample = seT$sample,
   replicate = seT$replicate,
-  total = colSums(!is.na(countMatT)), 
+  totalProteins = colSums(!is.na(countMatT)), 
   experiment = "SmartPhos"
 )
 
 plotTabComb <- rbind(plotTabD, plotTabT)
+```
+
+```{r}
+write.csv(plotTabComb, "totalComparison_FullProteomics_InSolutionTitration.csv", row.names = FALSE)
 ```
 
 ```{r,eval=FALSE, include=FALSE}
