@@ -304,7 +304,16 @@ clustEnrX <- clusterEnrichExp(clusterTab = tsc$cluster, se = newSE,
 ```
 
 ```{r cluster_enrichment}
-clustEnrX$plot + theme_classic()
+p <- clustEnrX$plot + theme_classic() +
+  theme(axis.text.y=element_text(size=14),
+            axis.text.x=element_text(size=14),
+            axis.title=element_text(size=18))+
+  theme(legend.title = element_text(size = 18),
+            legend.text = element_text(size = 16))
+ggsave(filename = "figureCommandLineHE/Enrichment_HE.pdf",
+       plot = p,
+       width = 14.0,
+       height = 10.0)
 ```
 
 # Kinase activity inference

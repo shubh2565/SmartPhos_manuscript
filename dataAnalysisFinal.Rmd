@@ -88,11 +88,21 @@ Increasing the sample quantity to 750ug doesn't improve the phophosite detection
 # Extract the assay data from the SummarizedExperiment object
 countMat <- assay(seTitrationHGF)
 
+# Extract intensity matrix and protein names
+protein_names <- rowData(seTitrationHGF)$UniprotID
+
+# Count unique proteins with non-NA intensities per sample
+protein_counts <- sapply(seq_len(ncol(countMat)), function(i) {
+  detected <- !is.na(countMat[, i]) & !is.na(protein_names)
+  length(unique(protein_names[detected]))
+})
+
 # Create a table with sample names and their corresponding percentage of
 # non-missing values
 plotTab <- tibble(
   sample = seTitrationHGF$sample,
-  total = colSums(!is.na(countMat)) 
+  totalProteins = protein_counts,
+  totalPhosphosites = colSums(!is.na(countMat)) 
 )
 
 # Extract metadata from the SummarizedExperiment object
@@ -106,6 +116,27 @@ plotTab <- plotTab %>%
                            ordered = TRUE)) %>%
   arrange(quantity) %>%
   mutate(sample = factor(sample, levels = sample))
+```
+
+```{r}
+# Proteins detected in every sample
+common_proteins <- unique(
+  protein_names[
+    !is.na(protein_names) &
+    rowSums(!is.na(countMat)) > 0
+  ]
+)
+
+# Keep only proteins detected in all samples
+common_proteins <- unique(
+  protein_names[
+    !is.na(protein_names) &
+    rowSums(!is.na(countMat)) == ncol(countMat)
+  ]
+)
+
+# Number of common proteins
+length(common_proteins)
 ```
 
 ```{r,eval=FALSE, include=FALSE}
@@ -147,25 +178,47 @@ phosphosites as compared to the InSolutionDigest experiment.
 seD <- seInSolution[, seInSolution$treatment == "HGF" 
                     & seInSolution$quantity == "50ug"]
 countMatD <- assay(seD)
+# Extract intensity matrix and protein names
+proteinD <- rowData(seD)$UniprotID
+# Count unique proteins with non-NA intensities per sample
+protein_countsD <- sapply(seq_len(ncol(countMatD)), function(i) {
+  detected <- !is.na(countMatD[, i]) & !is.na(proteinD)
+  length(unique(proteinD[detected]))
+})
 plotTabD <- tibble(
   sample = seD$sample,
   replicate = seD$replicate,
-  total = colSums(!is.na(countMatD)),
+  totalProteins = protein_countsD,
+  totalPhosphosites = colSums(!is.na(countMatD)),
   experiment = "InSolutionDigest"
 )
+
 
 seT <- seTitration[, seTitration$treatment == "HGF" 
                     & seTitration$quantity == "50ug"]
 countMatT <- assay(seT)
+# Extract intensity matrix and protein names
+proteinT <- rowData(seT)$UniprotID
+# Count unique proteins with non-NA intensities per sample
+protein_countsT <- sapply(seq_len(ncol(countMatT)), function(i) {
+  detected <- !is.na(countMatT[, i]) & !is.na(proteinT)
+  length(unique(proteinT[detected]))
+})
 plotTabT <- tibble(
   sample = seT$sample,
   replicate = seT$replicate,
-  total = colSums(!is.na(countMatT)), 
+  totalProteins = protein_countsT,
+  totalPhosphosites = colSums(!is.na(countMatT)), 
   experiment = "SmartPhos"
 )
 
 plotTabComb <- rbind(plotTabD, plotTabT)
 ```
+
+```{r}
+write.csv(plotTabComb, "totalComparisonTInSolutionTitration.csv", row.names = FALSE)
+```
+
 
 ```{r,eval=FALSE, include=FALSE}
 # Generate the bar plot using ggplot2

@@ -415,8 +415,7 @@ p <- clustEnrX$plot + theme_classic() +
             axis.text.x=element_text(size=14),
             axis.title=element_text(size=18))+
   theme(legend.title = element_text(size = 18),
-            legend.text = element_text(size = 18),
-            legend.key.size = unit(0.1, 'in'))
+            legend.text = element_text(size = 16))
 ggsave(filename = "figureCommandLineEGF/Enrichment_EGF.pdf",
        plot = p,
        width = 12.0,
