@@ -76,6 +76,104 @@ g <- ggplot(plotTab, aes(x = sample, y = total)) +
 g
 ```
 
+```{r}
+# Extract the assay data from the SummarizedExperiment object
+countMat <- assay(se)
+
+# Extract intensity matrix and protein names
+protein_names <- rowData(se)$UniprotID
+
+# Count unique proteins with non-NA intensities per sample
+protein_counts <- sapply(seq_len(ncol(countMat)), function(i) {
+  detected <- !is.na(countMat[, i]) & !is.na(protein_names)
+  length(unique(protein_names[detected]))
+})
+
+# Create a table with sample names and their corresponding percentage of
+# non-missing values
+plotTab <- tibble(
+  sample = se$sample,
+  totalProteins = protein_counts,
+  totalPhosphosites = colSums(!is.na(countMat)) 
+)
+
+# Extract metadata from the SummarizedExperiment object
+meta <- as.data.frame(colData(se))
+# Join the count data with metadata
+plotTab <- left_join(plotTab, meta, by = "sample")
+
+# plotTab <- plotTab %>%
+#   mutate(quantity = factor(quantity,
+#                            levels = c("5ug","15ug","50ug","200ug","750ug"),
+#                            ordered = TRUE)) %>%
+#   arrange(quantity) %>%
+#   mutate(sample = factor(sample, levels = sample))
+
+write.csv(plotTab, "totalUseCase.csv", row.names = FALSE)
+```
+
+```{r totalPhosphosites_perTreatment_perTimepoint}
+# Keep only Phospho samples
+df_phospho <- plotTab %>%
+  filter(sampleType == "Phospho")
+
+# Set timepoints in chronological order
+df_phospho$timepoint <- factor(
+  df_phospho$timepoint,
+  levels = c("0min", "10min", "20min", "40min", "100min", "3h", "6h")  # Add all your timepoints
+)
+
+# Calculate mean for each treatment and timepoint
+summary_df <- df_phospho %>%
+  group_by(treatment, timepoint) %>%
+  summarise(
+    mean_phosphosites = mean(totalPhosphosites, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+ggplot() +
+  # Transparent bars showing the mean
+  geom_col(
+    data = summary_df,
+    aes(x = timepoint, y = mean_phosphosites, fill = treatment),
+    width = 0.7,
+    alpha = 0.4
+  ) +
+
+  # Individual replicate points
+  geom_point(
+    data = df_phospho,
+    aes(
+      x = timepoint,
+      y = totalPhosphosites,
+      shape = replicate
+    ),
+    position = position_jitter(width = 0.08, height = 0),
+    size = 3,
+    stroke = 1.2,
+    color = "black"
+  ) +
+
+  # One panel per treatment
+  facet_wrap(~ treatment) +
+
+  # Requested replicate shapes
+  scale_shape_manual(values = c(1, 2, 0)) +
+
+  labs(
+    title = "Total phosphosites over time",
+    x = "Timepoint",
+    y = "Mean total phosphosites",
+    fill = "Treatment",
+    shape = "Replicate"
+  ) +
+
+  theme_classic(base_size = 14) +
+  theme(
+    legend.position = "bottom",
+    strip.text = element_text(face = "bold")
+  )
+```
 
 
 ```{r boxplot_unnormalized}
