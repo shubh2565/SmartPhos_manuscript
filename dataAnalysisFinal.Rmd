@@ -72,6 +72,180 @@ colData(seInSolution) <- colData(maeInSol)
 
 # Plot the total phosphosites detected
 
+
+```{r}
+seTitrationHGFCtrl <- seTitration[, seTitration$sampleType == "PP"]
+# Extract the assay data from the SummarizedExperiment object
+countMat1 <- assay(seTitrationHGFCtrl)
+
+# Extract intensity matrix and protein names
+protein_names1 <- rowData(seTitrationHGFCtrl)$UniprotID
+
+# Count unique proteins with non-NA intensities per sample
+protein_counts1 <- sapply(seq_len(ncol(countMat1)), function(i) {
+  detected <- !is.na(countMat1[, i]) & !is.na(protein_names1)
+  length(unique(protein_names1[detected]))
+})
+
+# Create a table with sample names and their corresponding percentage of
+# non-missing values
+plotTab1 <- tibble(
+  sample = seTitrationHGFCtrl$sample,
+  totalProteins = protein_counts1,
+  totalPhosphosites = colSums(!is.na(countMat1)) 
+)
+
+# Extract metadata from the SummarizedExperiment object
+meta1 <- as.data.frame(colData(seTitrationHGFCtrl))
+# Join the count data with metadata
+plotTab1 <- left_join(plotTab1, meta1, by = "sample")
+
+plotTab1 <- plotTab1 %>%
+  mutate(quantity = factor(quantity,
+                           levels = c("5ug","15ug","50ug","200ug","750ug"),
+                           ordered = TRUE)) %>%
+  arrange(quantity) %>%
+  mutate(sample = factor(sample, levels = sample))
+```
+
+```{r totalPhosphosites_CtrlHGF_SmartPhos}
+# Set factor order
+plotTab1 <- plotTab1 %>%
+  mutate(
+    treatment = factor(treatment,
+                       levels = c("unstimulated", "HGF")),
+    timepoints = factor(timepoint,
+                        levels = c("0min", "5 min"))
+  )
+
+# Remove facet combinations with only zero values
+plotTab_filtered <- plotTab1 %>%
+  group_by(quantity, treatment) %>%
+  filter(any(totalPhosphosites > 0, na.rm = TRUE)) %>%
+  ungroup()
+
+# Calculate averages
+plot_average <- plotTab_filtered %>%
+  group_by(quantity, treatment, timepoint) %>%
+  summarise(
+    meanPhosphosites = mean(totalPhosphosites, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+# Plot
+ggplot(plotTab_filtered,
+       aes(x = timepoint,
+           y = totalPhosphosites)) +
+
+  # Average bars
+  geom_col(
+    data = plot_average,
+    aes(x = timepoint, y = meanPhosphosites),
+    fill = "grey75",
+    alpha = 0.6,
+    width = 0.6
+  ) +
+
+  # Individual replicate points
+  geom_point(
+    aes(color = treatment),
+    position = position_jitter(width = 0.08, height = 0),
+    size = 2.5,
+    alpha = 0.9
+  ) +
+
+  # Facets
+  facet_grid(quantity ~ treatment) +
+
+  labs(
+    x = "Timepoint",
+    y = "Total phosphosites",
+    color = "Treatment"
+  ) +
+
+  theme_bw() +
+
+  theme(
+    strip.background = element_rect(fill = "grey90"),
+    strip.text = element_text(face = "bold"),
+    axis.text = element_text(color = "black"),
+    axis.title = element_text(face = "bold")
+  )
+```
+```{r}
+
+# Prepare data
+plotTab_filtered <- plotTab1 %>%
+  mutate(
+    treatment = trimws(as.character(treatment)),
+    quantity = trimws(as.character(quantity))
+  ) %>%
+  filter(
+    (treatment == "unstimulated" & quantity == "50ug") |
+    (treatment == "HGF" &
+       quantity %in% c("5ug", "15ug", "50ug", "200ug", "750ug"))
+  ) %>%
+  mutate(
+    quantity = factor(
+      quantity,
+      levels = c("5ug", "15ug", "50ug", "200ug", "750ug")
+    ),
+    treatment = factor(
+      treatment,
+      levels = c("unstimulated", "HGF")
+    )
+  )
+
+# Calculate means
+plot_average <- plotTab_filtered %>%
+  group_by(treatment, quantity) %>%
+  summarise(
+    meanPhosphosites = mean(totalPhosphosites, na.rm = TRUE),
+    .groups = "drop"
+  )
+
+# Plot
+ggplot(plotTab_filtered,
+       aes(x = quantity, y = totalPhosphosites)) +
+
+  # Average bars
+  geom_col(
+    data = plot_average,
+    aes(y = meanPhosphosites),
+    fill = "grey75",
+    width = 0.6
+  ) +
+
+  # Individual replicates
+  geom_point(
+    aes(color = treatment),
+    position = position_jitter(width = 0.08, height = 0),
+    size = 2.5,
+    alpha = 0.9
+  ) +
+
+  # Separate treatment facets
+  facet_grid(. ~ treatment, scales = "free_x", space = "free_x") +
+
+  labs(
+    x = "Quantity",
+    y = "Total phosphosites",
+    color = "Treatment"
+  ) +
+
+  theme_bw() +
+
+  theme(
+    strip.background = element_rect(fill = "grey90"),
+    strip.text = element_text(face = "bold"),
+    axis.text.x = element_text(angle = 45, hjust = 1),
+    axis.title = element_text(face = "bold")
+  )
+```
+
+
+
+
 ```{r}
 seInSolutionHGF <- seInSolution[, seInSolution$treatment == "HGF" &
                                   seInSolution$sampleType == "PP"]
@@ -141,7 +315,7 @@ length(common_proteins)
 
 ```{r,eval=FALSE, include=FALSE}
 # Generate the bar plot using ggplot2
-g <- ggplot(plotTab, aes(x = sample, y = total , fill = quantity)) +
+g <- ggplot(plotTab, aes(x = sample, y = totalPhosphosites , fill = quantity)) +
   geom_bar(stat = "identity") +
   scale_fill_brewer(palette = "Set2") +
   ggtitle("Total phosphosites for each sample (SmartPhos Protocol)") +
@@ -157,7 +331,7 @@ g
 
 ```{r totalPhosphosites_SmartPhos}
 # Generate the bar plot using ggplot2
-g <- ggplot(plotTab, aes(x = replicate, y = total , fill = quantity)) +
+g <- ggplot(plotTab, aes(x = replicate, y = totalPhosphosites , fill = quantity)) +
   geom_bar(stat = "identity") +
   scale_fill_brewer(palette = "Set2") +
   ggtitle("Total phosphosites for each sample (SmartPhos Protocol)") +
@@ -222,7 +396,7 @@ write.csv(plotTabComb, "totalComparisonInSolutionTitration.csv", row.names = FAL
 
 ```{r,eval=FALSE, include=FALSE}
 # Generate the bar plot using ggplot2
-g <- ggplot(plotTabComb, aes(x = sample, y = total)) +
+g <- ggplot(plotTabComb, aes(x = sample, y = totalPhosphosites)) +
   geom_bar(stat = "identity", aes(fill = experiment)) +
   ggtitle("Total Number of Phosphosites for 50ug samples") +
   ylab("Total sites") +
@@ -236,7 +410,7 @@ g
 
 ```{r totalPhosphosites_comparison}
 # Generate the bar plot using ggplot2
-g <- ggplot(plotTabComb, aes(x = replicate, y = total)) +
+g <- ggplot(plotTabComb, aes(x = replicate, y = totalPhosphosites)) +
   geom_bar(stat = "identity" , aes(fill = experiment)) +
   ggtitle("Comparison of Protocols for 50ug samples") +
   ylab("Total number of detected phosphorylation sites") + xlab("Replicate") +

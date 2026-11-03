@@ -171,8 +171,17 @@ ggplot() +
   theme_classic(base_size = 14) +
   theme(
     legend.position = "bottom",
-    strip.text = element_text(face = "bold")
+    strip.text = element_text(face = "bold"),
+    axis.text = element_text(color = "#000000")
   )
+
+# theme(aspect.ratio = 1, legend.position = "right", 
+#         axis.text = element_text(color = "#000000"),
+#         axis.text.y=element_text(size=18),
+#         axis.text.x=element_text(size=18),
+#         legend.text = element_text(size = 18),
+#         legend.title = element_text(size = 18, face = "bold"),
+#         axis.title=element_text(size=20))
 ```
 
 
