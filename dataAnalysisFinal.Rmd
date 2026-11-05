@@ -108,7 +108,7 @@ plotTab1 <- plotTab1 %>%
   mutate(sample = factor(sample, levels = sample))
 ```
 
-```{r totalPhosphosites_CtrlHGF_SmartPhos}
+```{r, eval=FALSE, include=FALSE}
 # Set factor order
 plotTab1 <- plotTab1 %>%
   mutate(
@@ -172,7 +172,7 @@ ggplot(plotTab_filtered,
     axis.title = element_text(face = "bold")
   )
 ```
-```{r}
+```{r totalPhosphosites_CtrlHGF_SmartPhos}
 
 # Prepare data
 plotTab_filtered <- plotTab1 %>%
@@ -233,14 +233,19 @@ ggplot(plotTab_filtered,
                treatment = c("unstimulated" = "Ctrl (0 min)",
                              "HGF" = "HGF (5 min)"))
   ) +
-
+  scale_fill_discrete(
+  name = "Treatment",
+  labels = c(
+    "unstimulated" = "Ctrl (0 min)",
+    "HGF" = "HGF (5 min)"
+  )) +
   labs(
     x = "Quantity",
     y = "Total phosphosites",
     color = "Treatment"
   ) +
 
-  theme_bw() +
+  theme_classic() +
 
   theme(
     strip.background = element_rect(fill = "white"),

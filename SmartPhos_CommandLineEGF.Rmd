@@ -114,14 +114,25 @@ write.csv(plotTab, "totalUseCase.csv", row.names = FALSE)
 
 ```{r totalPhosphosites_perTreatment_perTimepoint}
 # Keep only Phospho samples
-df_phospho <- plotTab %>%
-  filter(sampleType == "Phospho")
+# df_phospho <- plotTab %>%
+#   filter(sampleType == "Phospho")
+# 
+# # Set timepoints in chronological order
+# df_phospho$timepoint <- factor(
+#   df_phospho$timepoint,
+#   levels = c("0min", "10min", "20min", "40min", "100min")  # Add all your timepoints
+# ) %>%
+#   filter(!is.na(timepoint))
 
-# Set timepoints in chronological order
-df_phospho$timepoint <- factor(
-  df_phospho$timepoint,
-  levels = c("0min", "10min", "20min", "40min", "100min", "3h", "6h")  # Add all your timepoints
-)
+df_phospho <- plotTab %>%
+  filter(sampleType == "Phospho") %>%
+  mutate(
+    timepoint = factor(
+      timepoint,
+      levels = c("0min", "10min", "20min", "40min", "100min")
+    )
+  ) %>%
+  filter(!is.na(timepoint))
 
 # Calculate mean for each treatment and timepoint
 summary_df <- df_phospho %>%
@@ -161,14 +172,12 @@ ggplot() +
   scale_shape_manual(values = c(1, 2, 0)) +
 
   labs(
-    title = "Total phosphosites over time",
     x = "Timepoint",
-    y = "Mean total phosphosites",
+    y = "Total number of phosphosites",
     fill = "Treatment",
     shape = "Replicate"
   ) +
-
-  theme_classic(base_size = 14) +
+  theme_classic() +
   theme(
     legend.position = "bottom",
     strip.text = element_text(face = "bold"),
